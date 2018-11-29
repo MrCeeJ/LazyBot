@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : config.xml
+    Created on : 22 March, 2013, 9:05 AM
+    Author     : ANKIT
+    Description:
+        File specifies states and transition of an FSM.
+        This is an example file.
+-->
+
+<FSM>
+    <STATE id="START" type="ID">
+        <MESSAGE id="WAIT" action="wait" nextState="START" />
+        <MESSAGE id="ATTACK" action="attack" nextState="ATTACK" />
+        <MESSAGE id="STOP" action="stop" nextState="STOP" />
+    </STATE>
+    <STATE id="ATTACK">
+        <MESSAGE id="ATTACK" action="attack" nextState="ATTACK" />
+        <MESSAGE id="DEFEND" action="defend" nextState="START" />
+    </STATE>
+    <STATE id="STOP" />
+</FSM>
