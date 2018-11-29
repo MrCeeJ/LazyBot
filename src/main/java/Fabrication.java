@@ -11,11 +11,11 @@ import com.github.ocraft.s2client.protocol.unit.Unit;
 import java.util.List;
 import java.util.Optional;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
-@Slf4j
+@Log4j2
 class Fabrication {
 
     private S2Agent agent;
@@ -38,6 +38,7 @@ class Fabrication {
     }
 
     void run() {
+        log.info("running fabricator");
         buildNextItem();
     }
 
@@ -46,10 +47,10 @@ class Fabrication {
         if (agent.observation().getFoodCap() < 200) {
             if (agent.observation().getFoodUsed() >= agent.observation().getFoodCap() - utils.getMaxSupplyProduction()) {
                 if (minerals < 100) {
-                    System.out.println("Not enough minerals to build a depot");
+                    log.info("Not enough minerals to build a depot");
                     return false;
                 } else {
-                    System.out.println("Time to build a depot!");
+                    log.debug("Time to build a depot!");
                     tryBuildSupplyDepot();
                 }
             }
@@ -66,17 +67,17 @@ class Fabrication {
                 break;
         }
         if (nextConstruction.equals(Units.INVALID)) {
-            System.out.println("Nothing to build at the moment, lets save up!");
+            log.debug("Nothing to build at the moment, lets save up!");
             return false;
         } else {
-            System.out.println("Time to build a :"+ nextConstruction);
+            log.debug("Time to build a :"+ nextConstruction);
 
             return buildUnit(nextConstruction);
         }
     }
 
     private Units buildEconomy() {
-        System.out.println("Building up the economy. Make it rain!");
+        log.debug("Building up the economy. Make it rain!");
         int workers = agent.observation().getFoodWorkers();
         int bases = buildingUtils.getNumberOfBasesIncludingConstruction();
         if ((workers / bases) > 16) {
@@ -101,11 +102,11 @@ class Fabrication {
 
     private boolean tryToExpand() {
         if (agent.observation().getMinerals() > 400) {
-            System.out.println("Attempting to build a cc");
+            log.debug("Attempting to build a cc");
             tryBuildingBuildingAt(Abilities.BUILD_COMMAND_CENTER, TERRAN_SCV, mapUtils.getNearestExpansionLocationTo(mapUtils.getStartingBaseLocation()));
             return true;
         }
-        System.out.println("Not enough minerals to build a cc");
+        log.debug("Not enough minerals to build a cc");
 
         return false;
     }
@@ -149,7 +150,7 @@ class Fabrication {
         for (UnitInPool cc : commandCenters) {
             if (cc.getUnit().isPresent()) {
                 Unit com = cc.getUnit().get();
-                System.out.println("Telling the cc to build an scv!");
+                log.debug("Telling the cc to build an scv!");
 //                if (com.getOrders().size() == 0) {
                     agent.actions().unitCommand(com, Abilities.TRAIN_SCV, false);
                     return true;
@@ -160,7 +161,7 @@ class Fabrication {
     }
 
     private boolean tryBuildSupplyDepot() {
-        System.out.println("Attempting to build a depot");
+        log.debug("Attempting to build a depot");
         //return tryBuildStructure(Abilities.BUILD_SUPPLY_DEPOT, TERRAN_SCV);
        return tryToBuildBuilding(TERRAN_SUPPLY_DEPOT);
     }

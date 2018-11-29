@@ -26,13 +26,6 @@ class Utils {
         this.agent = agent;
     }
 
-    void log(String s) {
-        if (agent.observation().getGameLoop() % 10 == 0) {
-
-            System.out.println(s);
-        }
-    }
-
     Optional<Unit> findNearestMineralPatch(Point2d start) {
         List<UnitInPool> units = agent.observation().getUnits(Alliance.NEUTRAL);
         double distance = Double.MAX_VALUE;

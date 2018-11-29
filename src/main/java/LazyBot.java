@@ -1,8 +1,8 @@
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
-@Slf4j
+@Log4j2
 class LazyBot extends S2Agent {
     private Strategy strategy = new Strategy(this);
     private Fabrication fabrication = new Fabrication(this);
