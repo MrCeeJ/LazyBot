@@ -1,3 +1,4 @@
+package com.mrceej.sc2.lazybot ;
 import com.github.ocraft.s2client.bot.S2Coordinator;
 import com.github.ocraft.s2client.protocol.game.BattlenetMap;
 import com.github.ocraft.s2client.protocol.game.Difficulty;

@@ -1,29 +1,52 @@
+package com.mrceej.sc2.lazybot;
+
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
-import com.github.ocraft.s2client.protocol.data.Ability;
 import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.game.raw.StartRaw;
 import com.github.ocraft.s2client.protocol.response.ResponseGameInfo;
+import com.github.ocraft.s2client.protocol.spatial.Point;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.github.ocraft.s2client.protocol.unit.Unit;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Predicate;
 
-class Utils {
+class MapUtils {
 
-    private S2Agent agent;
-    float mineralRate;
-    float vespeneRate;
+    private final S2Agent agent;
+    private Point2d STARTING_BASE_LOCATION;
+   // private List<Point> base_locations;
 
-    static final double MARINE_COST_PER_MIN = 166.6666666666667;
-    static final double WORKER_COST_PER_MIN = 250;
-
-    Utils(S2Agent agent) {
+    MapUtils(S2Agent agent)
+    {
         this.agent = agent;
+    }
+
+    void init() {
+      //  base_locations = agent.query().calculateExpansionLocations(agent.observation());
+        STARTING_BASE_LOCATION = agent.observation().getStartLocation().toPoint2d();
+
+    }
+
+    Point2d getStartingBaseLocation() {
+        return STARTING_BASE_LOCATION;
+    }
+
+    Point2d getNearestExpansionLocationTo(Point2d source){
+        List<Point> base_locations = agent.query().calculateExpansionLocations(agent.observation());
+        base_locations.sort(getDistanceComparator(source));
+        return base_locations.get(0).toPoint2d();
+    }
+
+    private Comparator<Point> getDistanceComparator(Point2d source) {
+        return (p1, p2) -> {
+            Double d1 = p1.toPoint2d().distance(source);
+            Double d2 = p2.toPoint2d().distance(source);
+            return d1.compareTo(d2);
+        };
     }
 
     Optional<Unit> findNearestMineralPatch(Point2d start) {
@@ -43,9 +66,6 @@ class Utils {
         return Optional.ofNullable(target);
     }
 
-    int countUnitType(Units unitType) {
-        return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(unitType)).size();
-    }
 
 
     // Tries to find a random location that can be pathed to on the map.
@@ -65,13 +85,6 @@ class Utils {
         }
     }
 
-    Predicate<UnitInPool> doesBuildWith(Ability abilityTypeForStructure) {
-        return unitInPool -> unitInPool.unit()
-                .getOrders()
-                .stream()
-                .anyMatch(unitOrder -> abilityTypeForStructure.equals(unitOrder.getAbility()));
-    }
-
     Optional<UnitInPool> getRandomUnit(UnitType unitType) {
         List<UnitInPool> units = agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(unitType));
         return units.isEmpty()
@@ -81,18 +94,6 @@ class Utils {
 
     float getRandomScalar() {
         return ThreadLocalRandom.current().nextFloat() * 2 - 1;
-    }
-
-    void updateIncomes() {
-        mineralRate = agent.observation().getScore().getDetails().getCollectionRateMinerals();
-        vespeneRate = agent.observation().getScore().getDetails().getCollectionRateVespene();
-    }
-
-    int getMaxSupplyProduction() {
-        int total = 0;
-        total += agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_COMMAND_CENTER)).size();
-        total += agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_BARRACKS)).size() * 2;
-        return total;
     }
 
 }

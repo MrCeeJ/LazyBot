@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="src">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../EasyFSM-0.0.006.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

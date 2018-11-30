@@ -10,15 +10,17 @@
             <PatternLayout pattern="%d{YYYY-MM-dd HH:mm:ss} [%t] %-5p %c{1}:%L - %msg%n" />
             <Policies>
                 <SizeBasedTriggeringPolicy size="100 MB" />
+                <OnStartupTriggeringPolicy />
             </Policies>
             <DefaultRolloverStrategy max="20" />
         </RollingFile>
 
     </Appenders>
+
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console" />
-            <AppenderRef ref="RollingFile" />
+            <AppenderRef ref="RollingFile" level="info"/>
+            <AppenderRef ref="Console" level="info"/>
         </Root>
     </Loggers>
 </Configuration>
