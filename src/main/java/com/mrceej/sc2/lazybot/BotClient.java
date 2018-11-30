@@ -1,4 +1,5 @@
-package com.mrceej.sc2.lazybot ;
+package com.mrceej.sc2.lazybot;
+
 import com.github.ocraft.s2client.bot.S2Coordinator;
 import com.github.ocraft.s2client.protocol.game.BattlenetMap;
 import com.github.ocraft.s2client.protocol.game.Difficulty;
@@ -12,7 +13,9 @@ public class BotClient {
                 .loadSettings(args)
                 .setParticipants(
                         S2Coordinator.createParticipant(Race.TERRAN, bot),
-                        S2Coordinator.createComputer(Race.ZERG, Difficulty.EASY))
+                        S2Coordinator.createComputer(Race.PROTOSS, Difficulty.MEDIUM_HARD))
+//                        S2Coordinator.createComputer(Race.ZERG, Difficulty.MEDIUM_HARD))
+//                      S2Coordinator.createComputer(Race.TERRAN, Difficulty.MEDIUM_HARD))
                 .launchStarcraft()
                 .startGame(BattlenetMap.of("Cloud Kingdom LE"));
 

@@ -1,7 +1,12 @@
 package com.mrceej.sc2.lazybot;
 
+import SC2APIProtocol.Sc2Api;
+import SC2APIProtocol.Spatial;
+import SC2APIProtocol.Ui;
+import com.github.ocraft.s2client.api.S2Client;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
+import com.github.ocraft.s2client.protocol.action.Actions;
 import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
@@ -52,25 +57,39 @@ class General {
         Unit unit = unitInPool.unit();
         switch ((Units) unit.getType()) {
             case TERRAN_COMMAND_CENTER:
+                addToControlGroup(5, unit);
                 rebalenceWorkers();
                 break;
             case TERRAN_REFINERY:
+                addToControlGroup(9, unit);
                 //assignXWorkersToGas(2, unit);
                 break;
             case TERRAN_SCV:
+                addToControlGroup(0, unit);
                 onSCVCreated(unit);
                 break;
             case TERRAN_BARRACKS:
+                addToControlGroup(4, unit);
                 break;
             case TERRAN_MARINE:
+                addToControlGroup(1, unit);
                 onSoldierCreated(unit, TERRAN_MARINE);
                 break;
             case TERRAN_MARAUDER:
+                addToControlGroup(1, unit);
                 onSoldierCreated(unit, TERRAN_MARAUDER);
                 break;
             default:
                 break;
         }
+    }
+
+    private void addToControlGroup(int group, Unit unit) {
+        // TODO
+//        Ui.ActionControlGroup gca = SC2APIProtocol.Ui.ActionControlGroup.newBuilder().setControlGroupIndex(group).setAction(Ui.ActionControlGroup.ControlGroupAction.Append && gca.).build();
+//        Spatial.FeatureLayers.getDefaultInstance().
+//            agent.observation().getRawObservation().getFeatureLayer().get().
+//            agent.actionsFeatureLayer().unitCommand(Abilities.Other.)
     }
 
     void onUnitIdle(UnitInPool unitInPool) {

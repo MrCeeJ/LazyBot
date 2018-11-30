@@ -29,7 +29,7 @@ public class Macro implements Doctrine {
     public void calculateUrgency() {
         this.income = agent.observation().getScore().getDetails().getCollectionRateMinerals();
         this.expenditure = getExpenditure();
-        this.urgency = 20 * Utils.MARINE_COST_PER_MIN / (income - expenditure);
+        this.urgency = 21 * Utils.MARINE_COST_PER_MIN / (income - expenditure);
     }
 
     @Override

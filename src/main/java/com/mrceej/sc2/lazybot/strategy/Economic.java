@@ -35,22 +35,26 @@ public class Economic implements Doctrine {
         int workers = agent.observation().getFoodWorkers();
         int bases = utils.getNumberOfBasesIncludingConstruction();
         int minerals = agent.observation().getMinerals();
-        if ((utils.countOfBuildingsInConstruction(TERRAN_COMMAND_CENTER) == 0) && (workers / bases) > 14) {
-            if (minerals >= 400) {
-                return TERRAN_COMMAND_CENTER;
-            } else {
-                //log.info(" .. Saving up for a command center");
-                return Units.INVALID;
+        if (bases > 0) {
+            if ((utils.countOfBuildingsInConstruction(TERRAN_COMMAND_CENTER) == 0) && (workers / bases) > 14) {
+                if (minerals >= 400) {
+                    return TERRAN_COMMAND_CENTER;
+                } else {
+                    //log.info(" .. Saving up for a command center");
+                    return Units.INVALID;
+                }
+            } else if ((utils.countOfBuildingsInConstruction(TERRAN_SCV) < utils.countUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+                if (minerals >= 50) {
+                    return TERRAN_SCV;
+                } else {
+                    //log.info(" .. Saving up for an scv");
+                    return Units.INVALID;
+                }
             }
-        } else if ((utils.countOfBuildingsInConstruction(TERRAN_SCV) < utils.countUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
-            if (minerals >= 50) {
-                return TERRAN_SCV;
-            } else {
-                //log.info(" .. Saving up for an scv");
-                return Units.INVALID;
-            }
+            return null;
+
         }
-   //     log.warn(" .. nothing to build for the economy :)");
+        log.warn(" .. no bases! panic!)");
         return null;
     }
 
