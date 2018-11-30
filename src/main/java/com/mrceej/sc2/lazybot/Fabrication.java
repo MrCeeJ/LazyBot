@@ -1,5 +1,6 @@
 package com.mrceej.sc2.lazybot;
 
+import SC2APIProtocol.Data;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
@@ -44,24 +45,26 @@ class Fabrication {
 
     private void buildNextItem() {
         int minerals = agent.observation().getMinerals();
-        if (agent.observation().getFoodCap() < 200) {
-            if (agent.observation().getFoodUsed() + utils.getMaxSupplyProduction() >= agent.observation().getFoodCap() + utils.getSupplyInProgress()) {
-                if (minerals < 100) {
-               //     log.warn("Not enough minerals to build a depot");
-                    return;
-                } else {
-                    log.info("Time to build a depot!");
-                    buildUnit(TERRAN_SUPPLY_DEPOT);
-                }
-            }
-        }
+        int gas = agent.observation().getVespene();
+
+//        if (agent.observation().getFoodCap() < 200) {
+//            if (agent.observation().getFoodUsed() + utils.getMaxSupplyProduction() >= agent.observation().getFoodCap() + utils.getSupplyInProgress()) {
+//                if (minerals < 100) {
+//               //     log.warn("Not enough minerals to build a depot");
+//                    return;
+//                } else {
+//                    log.info("Time to build a depot!");
+//                    buildUnit(TERRAN_SUPPLY_DEPOT);
+//                }
+//            }
+//        }
         Units nextConstruction;
         List<Doctrine> strats = strategy.getPriority();
 
         debugStrats(strats);
 
         for (Doctrine d : strats) {
-            nextConstruction = d.getConstructionOrder();
+            nextConstruction = d.getConstructionOrder(minerals, gas);
             //log.info("Building attempt :" + d.getName() + " : " + nextConstruction);
             if (nextConstruction != null) {
                 if (nextConstruction.equals(Units.INVALID)) {
@@ -71,11 +74,16 @@ class Fabrication {
                     if (buildUnit(nextConstruction)) {
                         log.info("Time to build a :" + nextConstruction);
                         //break;
+                        minerals -= utils.getMineralCost(nextConstruction);
+                        gas -= utils.getGasCost(nextConstruction);
+
                     }
                 }
             }
         }
     }
+
+
 
     private void debugStrats(List<Doctrine> strats) {
         if (agent.observation().getGameLoop() % 50 == 0) {

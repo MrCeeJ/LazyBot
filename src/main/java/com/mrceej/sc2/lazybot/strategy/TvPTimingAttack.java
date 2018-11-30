@@ -5,6 +5,8 @@ import com.github.ocraft.s2client.protocol.data.Units;
 import java.util.List;
 
 public class TvPTimingAttack implements Doctrine {
+
+
     @Override
     public void calculateUrgency() {
 
@@ -70,7 +72,7 @@ public class TvPTimingAttack implements Doctrine {
     );
 
     @Override
-    public Units getConstructionOrder() {
+    public Units getConstructionOrder(int minerals, int gas) {
         return buildOrder.get(buildOrderPosition);
     }
 

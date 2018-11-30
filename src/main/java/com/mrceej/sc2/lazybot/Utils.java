@@ -109,14 +109,14 @@ public class Utils {
     }
 
 
-    int getMaxSupplyProduction() {
+    public int getMaxSupplyProduction() {
         int total = 0;
         total += agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_COMMAND_CENTER)).size();
         total += (agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_BARRACKS)).size() * 2);
         return total;
     }
 
-    int getSupplyInProgress() {
+    public int getSupplyInProgress() {
         int total = 0;
         total += (countOfBuildingsInConstruction(Units.TERRAN_COMMAND_CENTER) * 10);
         total += (countOfBuildingsInConstruction(Units.TERRAN_SUPPLY_DEPOT) * 8);
@@ -137,5 +137,23 @@ public class Utils {
             }
         }
         return count;
+    }
+
+    public int getMineralCost(Units unit) {
+        return agent.observation().getUnitTypeData(false).get(unit).getMineralCost().get();
+    }
+
+    public int getGasCost(Units unit) {
+        return agent.observation().getUnitTypeData(false).get(unit).getVespeneCost().get();
+    }
+
+    public int getMineralCost(Unit unit) {
+        return 50;
+        //TODO:
+        //return getMineralCost( unit.getType().)
+    }
+
+    public int getGasCost(Unit unit) {
+        return 0;
     }
 }

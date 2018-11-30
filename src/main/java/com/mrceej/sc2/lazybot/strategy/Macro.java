@@ -16,12 +16,8 @@ public class Macro implements Doctrine {
     private float income;
     private double expenditure;
 
-    public Macro(S2Agent agent) {
+    public Macro(S2Agent agent, Utils utils) {
         this.agent = agent;
-    }
-
-
-    public void init(Utils utils) {
         this.utils = utils;
     }
 
@@ -33,8 +29,7 @@ public class Macro implements Doctrine {
     }
 
     @Override
-    public Units getConstructionOrder() {
-        int minerals = agent.observation().getMinerals();
+    public Units getConstructionOrder(int minerals, int gas) {
 
         if ((utils.countOfBuildingsInConstruction(TERRAN_MARINE) < utils.countUnitType(TERRAN_BARRACKS))) {
             if (minerals > 50) {

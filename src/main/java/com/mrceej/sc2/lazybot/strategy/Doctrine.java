@@ -17,7 +17,7 @@ public interface Doctrine extends Comparable<Doctrine> {
 
      void calculateUrgency();
 
-    Units getConstructionOrder();
+    Units getConstructionOrder(int minerals, int gas);
 
     String getName();
 

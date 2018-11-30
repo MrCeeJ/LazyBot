@@ -10,14 +10,10 @@ public class Tech implements Doctrine {
 
     private final S2Agent agent;
     private Utils utils;
-
-    public Tech(S2Agent agent) {
-        this.agent = agent;
-    }
-
     double urgency;
 
-    public void init(Utils utils) {
+    public Tech(S2Agent agent, Utils utils) {
+        this.agent = agent;
         this.utils = utils;
     }
 
@@ -27,8 +23,8 @@ public class Tech implements Doctrine {
     }
 
     @Override
-    public Units getConstructionOrder() {
-        return Units.TERRAN_BARRACKS;
+    public Units getConstructionOrder(int mineras, int gas) {
+        return null;
     }
 
     @Override

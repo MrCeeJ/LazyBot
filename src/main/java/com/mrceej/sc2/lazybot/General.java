@@ -12,6 +12,7 @@ import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Unit;
 import com.github.ocraft.s2client.protocol.unit.UnitOrder;
+import com.mrceej.sc2.lazybot.Combat.Squad;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
@@ -28,6 +29,8 @@ class General {
     private Utils utils;
     private MapUtils mapUtils;
 
+    private Squad currentSquad;
+
     General(S2Agent agent) {
         this.agent = agent;
 
@@ -36,6 +39,7 @@ class General {
     void init(Utils utils, MapUtils mapUtils) {
         this.utils = utils;
         this.mapUtils = mapUtils;
+        this.currentSquad = new Squad(utils);
     }
 
     enum Role {
@@ -102,11 +106,20 @@ class General {
     }
 
     private void onSoldierCreated(Unit unit, Units type) {
-        if (utils.countUnitType(type) < 15) {
-            agent.actions().unitCommand(unit, Abilities.MOVE, utils.getCCLocation(), false);
+        currentSquad.add(unit);
+
+        if (currentSquad.getValue() > 1000) {
+            giveAttackOrder(currentSquad);
+            currentSquad = new Squad(utils);
         } else {
+            agent.actions().unitCommand(unit, Abilities.MOVE, utils.getCCLocation(), false);
+        }
+    }
+
+    private void giveAttackOrder(Squad squad) {
+        for (Unit u : squad.getUnits()) {
             mapUtils.findEnemyPosition().ifPresent(point2d ->
-                    agent.actions().unitCommand(unit, Abilities.ATTACK_ATTACK, point2d, false));
+                    agent.actions().unitCommand(u, Abilities.ATTACK_ATTACK, point2d, false));
         }
     }
 

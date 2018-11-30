@@ -11,46 +11,42 @@ import java.util.List;
 @Log4j2
 class Strategy {
 
+    private enum Mode {basic, simple, rush}
+
     private S2Agent agent;
-    private Utils utils;
-    private Economic eco;
-    private Macro macro;
-    private Tech tech;
-    private TvPTimingAttack tvpTimingAttack;
-
+    private List<Doctrine> doctrines;
     private Mode mode;
-
-    private enum Mode {basic, rush}
-
 
     Strategy(S2Agent agent) {
         this.agent = agent;
-        this.eco = new Economic(agent);
-        this.macro = new Macro(agent);
-        this.tech = new Tech(agent);
-        this.tvpTimingAttack = new TvPTimingAttack();
+        this.doctrines = new ArrayList<>();
 
+        mode = Mode.simple;
     }
-
     void init(Utils utils) {
-        this.utils = utils;
-        eco.init(utils);
-        macro.init(utils);
-        tech.init(utils);
-        mode = Mode.basic;
-
+        switch (mode) {
+            case rush:
+                doctrines.add(new TvPTimingAttack());
+                break;
+            case basic:
+                doctrines.add(new SimpleSupply(agent, utils));
+                doctrines.add(new Economic(agent, utils));
+                doctrines.add(new Macro(agent, utils));
+                doctrines.add(new Tech(agent, utils));
+                break;
+            default:
+            case simple:
+                doctrines.add(new SimpleSupply(agent, utils));
+                doctrines.add(new SimpleEconomic(agent, utils));
+                doctrines.add(new SimpleMacro(agent, utils));
+                doctrines.add(new Tech(agent, utils));
+                break;
+        }
     }
 
     List<Doctrine> getPriority() {
-        switch (mode) {
-            case rush:
-                return new ArrayList<>(List.of(tvpTimingAttack));
-            case basic:
-            default:
-                List<Doctrine> s = new ArrayList<>(List.of(eco, macro, tech));
-                Collections.sort(s);
-                return s;
-        }
+        Collections.sort(doctrines);
+        return doctrines;
     }
 
 
