@@ -1,53 +1,95 @@
 package com.mrceej.sc2.lazybot.Combat;
 
+import com.github.ocraft.s2client.bot.S2Agent;
+import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.unit.Unit;
+import com.mrceej.sc2.lazybot.MapUtils;
 import com.mrceej.sc2.lazybot.Utils;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+@Log4j2
 public class Squad {
 
     private final Utils utils;
-    private  int value;
+    private final MapUtils mapUtils;
+    private final S2Agent agent;
+    private int value ;
+    @Getter
     private Orders orders;
-    private List<Unit> units ;
+    @Getter
+    private List<Unit> units;
 
-    public Squad(Utils utils) {
+    public Squad(S2Agent agent, Utils utils, MapUtils mapUtils) {
+        this.agent = agent;
         this.utils = utils;
+        this.mapUtils = mapUtils;
         this.units = new ArrayList<>();
+        this.value = 0;
+        this.orders = Orders.DEFEND;
     }
 
-    public int getValue() {
+    private void updateValue() {
         int val = 0;
         for (Unit u : units) {
             val += utils.getMineralCost(u);
-            val += (2*utils.getGasCost(u));
+            val += (2 * utils.getGasCost(u));
         }
-        return val;
+        this.value = val;
+        logValue();
     }
 
-    public List<Unit> getUnits() {
-        return units;
+    private void logValue() {
+        log.info("Squad contains :" + getContentsAsString());
+        log.info("Total value :" + value);
     }
 
-    private enum Orders {defend, attack}
-
-    public void add(Unit unit) {
-        this.units.add(unit);
+    private String getContentsAsString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (Unit u : units) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(",");
+            }
+            sb.append(u.getType().toString());
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
-    Orders getOrders() {
-        return this.orders;
+    public enum Orders {DEFEND, ATTACK}
+
+    public void addUnitAndGiveOrders(Unit unit) {
+        units.add(unit);
+
+        if (isReadyToAttack()) {
+            this.orders = Orders.ATTACK;
+            giveAttackOrder();
+        } else {
+            giveDefaultOrder(unit);
+        }
     }
 
-    void setOrders(Orders o) {
-        this.orders = o;
+    private boolean isReadyToAttack() {
+        updateValue();
+        return (value >= 1000);
     }
 
-    List<Unit> getUnts(){
-        return units;
+    private void giveDefaultOrder(Unit unit) {
+        agent.actions().unitCommand(unit, Abilities.MOVE, mapUtils.getCCLocation(), false);
+    }
+
+    private void giveAttackOrder() {
+        for (Unit u : units) {
+            mapUtils.findEnemyPosition().ifPresent(point2d ->
+                    agent.actions().unitCommand(u, Abilities.ATTACK_ATTACK, point2d, false));
+        }
     }
 
 }

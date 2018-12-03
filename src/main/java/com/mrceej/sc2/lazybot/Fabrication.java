@@ -1,21 +1,17 @@
 package com.mrceej.sc2.lazybot;
 
-import SC2APIProtocol.Data;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
-import com.github.ocraft.s2client.protocol.data.Ability;
-import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.github.ocraft.s2client.protocol.unit.Unit;
+import com.mrceej.sc2.lazybot.strategy.Doctrine;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
 import java.util.Optional;
-
-import com.mrceej.sc2.lazybot.strategy.Doctrine;
-import lombok.extern.log4j.Log4j2;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
@@ -27,6 +23,7 @@ class Fabrication {
     private Strategy strategy;
     private MapUtils mapUtils;
     private Utils utils;
+    private boolean isSavingUp = false;
 
     Fabrication(S2Agent agent) {
         this.agent = agent;
@@ -46,44 +43,29 @@ class Fabrication {
     private void buildNextItem() {
         int minerals = agent.observation().getMinerals();
         int gas = agent.observation().getVespene();
-
-//        if (agent.observation().getFoodCap() < 200) {
-//            if (agent.observation().getFoodUsed() + utils.getMaxSupplyProduction() >= agent.observation().getFoodCap() + utils.getSupplyInProgress()) {
-//                if (minerals < 100) {
-//               //     log.warn("Not enough minerals to build a depot");
-//                    return;
-//                } else {
-//                    log.info("Time to build a depot!");
-//                    buildUnit(TERRAN_SUPPLY_DEPOT);
-//                }
-//            }
-//        }
         Units nextConstruction;
         List<Doctrine> strats = strategy.getPriority();
-
         debugStrats(strats);
-
         for (Doctrine d : strats) {
             nextConstruction = d.getConstructionOrder(minerals, gas);
-            //log.info("Building attempt :" + d.getName() + " : " + nextConstruction);
             if (nextConstruction != null) {
                 if (nextConstruction.equals(Units.INVALID)) {
-                    //log.warn("Need more money to build, lets save up!");
+                    if(!isSavingUp){
+                        log.info("Saving up for next fabrication from : " + d.getName());
+                        isSavingUp = true;
+                    }
+
                     return;
                 } else {
+                    isSavingUp = false;
                     if (buildUnit(nextConstruction)) {
-                        log.info("Time to build a :" + nextConstruction);
-                        //break;
                         minerals -= utils.getMineralCost(nextConstruction);
                         gas -= utils.getGasCost(nextConstruction);
-
                     }
                 }
             }
         }
     }
-
-
 
     private void debugStrats(List<Doctrine> strats) {
         if (agent.observation().getGameLoop() % 50 == 0) {
@@ -96,6 +78,8 @@ class Fabrication {
     private boolean buildUnit(Units unit) {
         if (unit.equals(TERRAN_COMMAND_CENTER)) {
             return tryToExpand();
+        } else if (unit.equals(TERRAN_REFINERY)) {
+            return tryToBuildRefinary();
         } else if (unit.equals(TERRAN_SCV)) {
             return tryToBuildSCV();
         } else if (unit.equals(TERRAN_MARINE)) {
@@ -108,19 +92,10 @@ class Fabrication {
     private boolean tryToExpand() {
         if (agent.observation().getMinerals() > 400) {
             log.info("Attempting to build a Command Center");
-            if (agent.observation().getUnits(Alliance.SELF, utils.doesBuildWith(Abilities.BUILD_COMMAND_CENTER)).isEmpty()) {
-                Optional<UnitInPool> unitInPool = mapUtils.getRandomUnit(TERRAN_SCV);
-                if (unitInPool.isPresent()) {
-                    Unit unit = unitInPool.get().unit();
-                    agent.actions().unitCommand(
-                            unit,
-                            Abilities.BUILD_COMMAND_CENTER,
-                            mapUtils.getNearestExpansionLocationTo(mapUtils.getStartingBaseLocation()), false);
-                    if (unit.getOrders().get(0).getAbility().equals(Abilities.BUILD_COMMAND_CENTER)) {
-                        general.setRole(unit, General.Role.BUILD_SUPPLY_DEPOT);
-
-                    }
-                }
+            if (utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0) {
+                Unit unit = mapUtils.getRandomUnit(TERRAN_SCV);
+                agent.actions().unitCommand(unit, Abilities.BUILD_COMMAND_CENTER,
+                        mapUtils.getNearestExpansionLocationTo(mapUtils.getStartingBaseLocation().toPoint2d()), false);
             }
             return true;
         }
@@ -128,54 +103,68 @@ class Fabrication {
         return false;
     }
 
+    private boolean tryToBuildRefinary() {
+        if (agent.observation().getMinerals() > 75) {
+            Optional<Unit> geyser = mapUtils.findNearestVespene(agent.observation().getStartLocation().toPoint2d());
+            if (geyser.isPresent()) {
+                return tryToBuildBuildingOnUnit(TERRAN_REFINERY, geyser.get());
+            }
+        }
+        log.info("Not enough minerals to build a Refinary");
+        return false;
+    }
+
+
     private boolean tryToBuildMarine() {
-        List<UnitInPool> barracks = agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_BARRACKS));
+        List<Unit> barracks = utils.getFinishedUnits(TERRAN_BARRACKS);
+        log.debug("Found " + barracks + " barracks.");
+        int count = 0;
         if (agent.observation().getMinerals() >= 50) {
-            for (UnitInPool b : barracks) {
-                if (b.getUnit().isPresent()) {
-                    if (b.getUnit().get().getOrders().size() == 0) {
-                        agent.actions().unitCommand(b.getUnit().get(), Abilities.TRAIN_MARINE, false);
-                        return true;
-                    }
+            for (Unit b : barracks) {
+                if (b.getOrders().size() == 0) {
+                    agent.actions().unitCommand(b, Abilities.TRAIN_MARINE, false);
+//                    log.info("Building marine on the " + count + "th attempt.");
+                    return true;
+                } else {
+                    count++;
                 }
             }
         }
+        log.info("Unable to build a marine after " + count + " attempts.");
         return false;
     }
 
     private boolean tryToBuildSCV() {
         if (agent.observation().getMinerals() < 50) {
-            log.info("Telling the cc to build an scv!");
+            log.info("Insufficient minerals for a worker!");
             return false;
         }
-        List<UnitInPool> commandCenters = agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_COMMAND_CENTER));
-        for (UnitInPool cc : commandCenters) {
-            if (cc.getUnit().isPresent()) {
-                Unit com = cc.getUnit().get();
-                if (com.getOrders().size() == 0) {
-                    log.info("Telling the cc to build an scv!");
-                    agent.actions().unitCommand(com, Abilities.TRAIN_SCV, false);
-                    return true;
-                }
+        List<Unit> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+        int count = 0;
+        for (Unit com : commandCenters) {
+            if (com.getOrders().size() == 0) {
+                log.info("Telling the cc to build an scv on attempt :" + count);
+                agent.actions().unitCommand(com, Abilities.TRAIN_SCV, false);
+                return true;
+            } else {
+                count++;
             }
         }
+        log.info("Unable to build a marine after " + count + " attempts.");
+        return false;
+    }
+
+    private boolean tryToBuildBuilding(Units unitType) {
+        Unit unit = mapUtils.getRandomUnit(TERRAN_SCV);
+        agent.actions().unitCommand(unit, utils.getAbilityToBuildUnit(unitType),
+                unit.getPosition().toPoint2d().add(Point2d.of(mapUtils.getRandomScalar(), mapUtils.getRandomScalar()).mul(15.0f)), false);
         return true;
     }
 
-    private boolean tryToBuildBuilding(UnitType unitType) {
-//        if (!agent.observation().getUnits(Alliance.SELF, buildingUtils.doesBuildWith(buildingUtils.getAbilityTypeForStructure(unitType))).isEmpty()) {
-//            return false;
-//        }
-        Optional<UnitInPool> unitInPool = mapUtils.getRandomUnit(TERRAN_SCV);
-        if (unitInPool.isPresent()) {
-            Unit unit = unitInPool.get().unit();
-            agent.actions().unitCommand(
-                    unit,
-                    utils.getAbilityTypeForStructure(unitType),
-                    unit.getPosition().toPoint2d().add(Point2d.of(mapUtils.getRandomScalar(), mapUtils.getRandomScalar()).mul(15.0f)),
-                    false);
-            return true;
-        }
-        return false;
+    private boolean tryToBuildBuildingOnUnit(Units unitType, Unit location) {
+        Unit unit = mapUtils.getRandomUnit(TERRAN_SCV);
+        agent.actions().unitCommand(unit, utils.getAbilityToBuildUnit(unitType), location, false);
+        return true;
     }
+
 }

@@ -31,7 +31,7 @@ public class Macro implements Doctrine {
     @Override
     public Units getConstructionOrder(int minerals, int gas) {
 
-        if ((utils.countOfBuildingsInConstruction(TERRAN_MARINE) < utils.countUnitType(TERRAN_BARRACKS))) {
+        if ((utils.countOfUnitUnderConstruction(TERRAN_MARINE) < utils.countFinishedUnitType(TERRAN_BARRACKS))) {
             if (minerals > 50) {
                 return Units.TERRAN_MARINE;
             } else {
@@ -47,13 +47,13 @@ public class Macro implements Doctrine {
     }
 
     double getExpenditure() {
-        return utils.countUnitType(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN + Utils.WORKER_COST_PER_MIN;
+        return utils.countFinishedUnitType(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN + Utils.WORKER_COST_PER_MIN;
     }
 
     double getPlannedExpenditure() {
         double total = getExpenditure();
-        total += utils.countOfBuildingsInConstruction(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN;
-        total += utils.countOfBuildingsInConstruction(Units.TERRAN_COMMAND_CENTER) * Utils.WORKER_COST_PER_MIN;
+        total += utils.countOfUnitUnderConstruction(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN;
+        total += utils.countOfUnitUnderConstruction(Units.TERRAN_COMMAND_CENTER) * Utils.WORKER_COST_PER_MIN;
 
         return total;
     }
@@ -66,8 +66,8 @@ public class Macro implements Doctrine {
     @Override
     public void debugStatus() {
         log.info("Macro: +" + income + " -" + expenditure + " -> urgency : " + urgency);
-        log.info("Barracks :" + utils.countUnitType(TERRAN_BARRACKS));
-        log.info("Marines in construction : " + utils.countOfBuildingsInConstruction(TERRAN_MARINE));
+        log.info("Barracks :" + utils.countFinishedUnitType(TERRAN_BARRACKS));
+        log.info("Marines in construction : " + utils.countOfUnitUnderConstruction(TERRAN_MARINE));
 
     }
 }

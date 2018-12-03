@@ -37,7 +37,7 @@ class Strategy {
             default:
             case simple:
                 doctrines.add(new SimpleSupply(agent, utils));
-                doctrines.add(new SimpleEconomic(agent, utils));
+                doctrines.add(new SimpleEconomyWithGas(agent, utils));
                 doctrines.add(new SimpleMacro(agent, utils));
                 doctrines.add(new Tech(agent, utils));
                 break;

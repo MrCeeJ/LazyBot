@@ -23,23 +23,23 @@ public class Economic implements Doctrine {
     @Override
     public void calculateUrgency() {
         int totalSCVs = 116;
-        int currentSCVs = utils.countUnitType(Units.TERRAN_SCV);
+        int currentSCVs = utils.countFinishedUnitType(Units.TERRAN_SCV);
         this.urgency = 100d * currentSCVs / totalSCVs;
     }
 
     @Override
     public Units getConstructionOrder(int minerals, int gas) {
         int workers = agent.observation().getFoodWorkers();
-        int bases = utils.getNumberOfBasesIncludingConstruction();
+        int bases = utils.countOfUnitsIncludingUnderConstruction(TERRAN_COMMAND_CENTER);
         if (bases > 0) {
-            if ((utils.countOfBuildingsInConstruction(TERRAN_COMMAND_CENTER) == 0) && (workers / bases) > 14) {
+            if ((utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0) && (workers / bases) > 14) {
                 if (minerals >= 400) {
                     return TERRAN_COMMAND_CENTER;
                 } else {
                     //log.info(" .. Saving up for a command center");
                     return Units.INVALID;
                 }
-            } else if ((utils.countOfBuildingsInConstruction(TERRAN_SCV) < utils.countUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+            } else if ((utils.countOfUnitUnderConstruction(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
                 if (minerals >= 50) {
                     return TERRAN_SCV;
                 } else {
@@ -62,8 +62,8 @@ public class Economic implements Doctrine {
     @Override
     public void debugStatus() {
         log.info("Economy : " + urgency);
-        log.info("Workers in production :" + utils.countOfBuildingsInConstruction(TERRAN_SCV));
-        log.info("Max Workers in production :" + utils.countUnitType(TERRAN_COMMAND_CENTER));
+        log.info("Workers in production :" + utils.countOfUnitUnderConstruction(TERRAN_SCV));
+        log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
     }
 
 }

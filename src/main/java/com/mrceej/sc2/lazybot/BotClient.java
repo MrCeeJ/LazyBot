@@ -13,7 +13,7 @@ public class BotClient {
                 .loadSettings(args)
                 .setParticipants(
                         S2Coordinator.createParticipant(Race.TERRAN, bot),
-                        S2Coordinator.createComputer(Race.PROTOSS, Difficulty.MEDIUM_HARD))
+                        S2Coordinator.createComputer(Race.PROTOSS, Difficulty.HARDER))
 //                        S2Coordinator.createComputer(Race.ZERG, Difficulty.MEDIUM_HARD))
 //                      S2Coordinator.createComputer(Race.TERRAN, Difficulty.MEDIUM_HARD))
                 .launchStarcraft()
