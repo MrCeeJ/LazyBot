@@ -12,6 +12,7 @@ import com.github.ocraft.s2client.protocol.unit.UnitSnapshot;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 import static java.util.Map.entry;
@@ -67,18 +68,11 @@ public class Utils {
         return getFinishedUnits(unitType).size();
     }
 
-    public List<Unit> getFinishedUnits(Units unitType) {
-        List<UnitInPool> unitsInPool = agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(unitType));
-        ArrayList<Unit> units = new ArrayList<>();
-        for (UnitInPool u : unitsInPool) {
-            if (u.getUnit().isPresent()) {
-                Unit up = u.getUnit().get();
-                if (up.getBuildProgress() == 1f) {
-                    units.add(up);
-                }
-            }
-        }
-        return units;
+    public List<UnitInPool> getFinishedUnits(Units unitType) {
+
+        return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(unitType)).stream()
+                .filter(u -> u.unit().getBuildProgress() == 1f)
+                .collect(Collectors.toList());
     }
 
 
@@ -145,12 +139,12 @@ public class Utils {
         return agent.observation().getUnitTypeData(false).get(unit).getVespeneCost().get();
     }
 
-    public int getMineralCost(Unit unit) {
-        return getMineralCost((Units) Units.from(unit.getType().getUnitTypeId()));
+    public int getMineralCost(UnitInPool unit) {
+        return getMineralCost((Units) Units.from(unit.unit().getType().getUnitTypeId()));
     }
 
-    public int getGasCost(Unit unit) {
-        return getGasCost((Units) Units.from(unit.getType().getUnitTypeId()));
+    public int getGasCost(UnitInPool unit) {
+        return getGasCost((Units) Units.from(unit.unit().getType().getUnitTypeId()));
 
     }
 }

@@ -5,8 +5,6 @@ import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
-import com.github.ocraft.s2client.protocol.unit.Alliance;
-import com.github.ocraft.s2client.protocol.unit.Unit;
 import com.mrceej.sc2.lazybot.strategy.Doctrine;
 import lombok.extern.log4j.Log4j2;
 
@@ -93,8 +91,9 @@ class Fabrication {
         if (agent.observation().getMinerals() > 400) {
             log.info("Attempting to build a Command Center");
             if (utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0) {
-                Unit unit = mapUtils.getRandomUnit(TERRAN_SCV);
-                agent.actions().unitCommand(unit, Abilities.BUILD_COMMAND_CENTER,
+                UnitInPool unit = mapUtils.getRandomUnit(TERRAN_SCV);
+                general.deallocateWorker(unit);
+                agent.actions().unitCommand(unit.unit(), Abilities.BUILD_COMMAND_CENTER,
                         mapUtils.getNearestExpansionLocationTo(mapUtils.getStartingBaseLocation().toPoint2d()), false);
             }
             return true;
@@ -105,7 +104,7 @@ class Fabrication {
 
     private boolean tryToBuildRefinary() {
         if (agent.observation().getMinerals() > 75) {
-            Optional<Unit> geyser = mapUtils.findNearestVespene(agent.observation().getStartLocation().toPoint2d());
+            Optional<UnitInPool> geyser = mapUtils.findNearestVespene(mapUtils.getStartingBase());
             if (geyser.isPresent()) {
                 return tryToBuildBuildingOnUnit(TERRAN_REFINERY, geyser.get());
             }
@@ -116,13 +115,13 @@ class Fabrication {
 
 
     private boolean tryToBuildMarine() {
-        List<Unit> barracks = utils.getFinishedUnits(TERRAN_BARRACKS);
+        List<UnitInPool> barracks = utils.getFinishedUnits(TERRAN_BARRACKS);
         log.debug("Found " + barracks + " barracks.");
         int count = 0;
         if (agent.observation().getMinerals() >= 50) {
-            for (Unit b : barracks) {
-                if (b.getOrders().size() == 0) {
-                    agent.actions().unitCommand(b, Abilities.TRAIN_MARINE, false);
+            for (UnitInPool b : barracks) {
+                if (b.unit().getOrders().size() == 0) {
+                    agent.actions().unitCommand(b.unit(), Abilities.TRAIN_MARINE, false);
 //                    log.info("Building marine on the " + count + "th attempt.");
                     return true;
                 } else {
@@ -139,12 +138,12 @@ class Fabrication {
             log.info("Insufficient minerals for a worker!");
             return false;
         }
-        List<Unit> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+        List<UnitInPool> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
         int count = 0;
-        for (Unit com : commandCenters) {
-            if (com.getOrders().size() == 0) {
+        for (UnitInPool com : commandCenters) {
+            if (com.unit().getOrders().size() == 0) {
                 log.info("Telling the cc to build an scv on attempt :" + count);
-                agent.actions().unitCommand(com, Abilities.TRAIN_SCV, false);
+                agent.actions().unitCommand(com.unit(), Abilities.TRAIN_SCV, false);
                 return true;
             } else {
                 count++;
@@ -155,15 +154,16 @@ class Fabrication {
     }
 
     private boolean tryToBuildBuilding(Units unitType) {
-        Unit unit = mapUtils.getRandomUnit(TERRAN_SCV);
-        agent.actions().unitCommand(unit, utils.getAbilityToBuildUnit(unitType),
-                unit.getPosition().toPoint2d().add(Point2d.of(mapUtils.getRandomScalar(), mapUtils.getRandomScalar()).mul(15.0f)), false);
+        UnitInPool unit = mapUtils.getRandomUnit(TERRAN_SCV);
+        agent.actions().unitCommand(unit.unit(), utils.getAbilityToBuildUnit(unitType),
+                unit.unit().getPosition().toPoint2d().add(Point2d.of(mapUtils.getRandomScalar(), mapUtils.getRandomScalar()).mul(15.0f)), false);
         return true;
     }
 
-    private boolean tryToBuildBuildingOnUnit(Units unitType, Unit location) {
-        Unit unit = mapUtils.getRandomUnit(TERRAN_SCV);
-        agent.actions().unitCommand(unit, utils.getAbilityToBuildUnit(unitType), location, false);
+    private boolean tryToBuildBuildingOnUnit(Units unitType, UnitInPool location) {
+        UnitInPool unit = mapUtils.getRandomUnit(TERRAN_SCV);
+        general.deallocateWorker(unit);
+        agent.actions().unitCommand(unit.unit(), utils.getAbilityToBuildUnit(unitType), location.unit(), false);
         return true;
     }
 

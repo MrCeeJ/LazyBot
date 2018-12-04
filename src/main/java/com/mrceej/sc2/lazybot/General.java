@@ -22,9 +22,11 @@ class General {
     private MapUtils mapUtils;
 
     private ArrayList<Squad> squads;
-    private Map<Unit, Unit> workerToBaseMap;
+    private Map<UnitInPool, UnitInPool> workerToBaseMap;
 
     private Squad currentSquad;
+
+    private boolean firstCommandCenter = true;
 
     General(S2Agent agent) {
         this.agent = agent;
@@ -41,42 +43,44 @@ class General {
 
     void onUnitCreated(UnitInPool unitInPool) {
         log.info("Created unit :" + unitInPool.getTag() + " :" + unitInPool.unit().getType());
-        Unit unit = unitInPool.unit();
-        Units unitType = (Units) unit.getType();
+        Units unitType = (Units) unitInPool.unit().getType();
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
+                if (firstCommandCenter) {
+                    mapUtils.setStartingBase(unitInPool);
+                    this.firstCommandCenter = false;
+                }
                 addToControlGroup(5, unitType);
                 break;
             case TERRAN_SCV:
                 addToControlGroup(0, unitType);
-                onSCVCreated(unit);
+                onSCVCreated(unitInPool);
                 break;
             case TERRAN_BARRACKS:
                 addToControlGroup(6, unitType);
                 break;
             case TERRAN_MARINE:
                 addToControlGroup(1, unitType);
-                onSoldierCreated(unit, TERRAN_MARINE);
+                onSoldierCreated(unitInPool, TERRAN_MARINE);
                 break;
             case TERRAN_MARAUDER:
                 addToControlGroup(1, unitType);
-                onSoldierCreated(unit, TERRAN_MARAUDER);
+                onSoldierCreated(unitInPool, TERRAN_MARAUDER);
                 break;
             default:
                 break;
         }
     }
 
-    void onBuildingConstructionComplete(UnitInPool unitInPool) {
-        Unit unit = unitInPool.unit();
-        Units unitType = (Units) unit.getType();
+    void onBuildingConstructionComplete(UnitInPool unit) {
+        Units unitType = (Units) unit.unit().getType();
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
                 addToControlGroup(5, unitType);
                 rebalanceWorkers();
                 break;
             case TERRAN_REFINERY:
-                allocateWorkersToGas(unit, 3);
+                allocateWorkersToGas(unit, 2);
                 rebalanceWorkers();
                 break;
             default:
@@ -123,7 +127,7 @@ class General {
         Units unitType = (Units) unit.getType();
         switch (unitType) {
             case TERRAN_SCV:
-                handleIdleSCV(unit);
+                handleIdleSCV(unitInPool);
                 break;
             case TERRAN_COMMAND_CENTER:
                 rebalanceWorkers();
@@ -139,11 +143,11 @@ class General {
         }
     }
 
-    private void allocateWorkersToGas(Unit refinery, int number) {
-        List<Unit> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
-        bases.sort(mapUtils.getLinearDistanceComparatorForUnit(refinery.getPosition().toPoint2d()));
+    private void allocateWorkersToGas(UnitInPool refinery, int number) {
+        List<UnitInPool> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+        bases.sort(mapUtils.getLinearDistanceComparatorForUnit(refinery.unit().getPosition().toPoint2d()));
         int found = 0;
-        for (Unit base : bases) {
+        for (UnitInPool base : bases) {
             int workersAvailble = countAssignedWorkers(base);
             if (workersAvailble >= number - found) {
                 reassignWorkers(number, base, refinery);
@@ -156,15 +160,16 @@ class General {
             }
         }
     }
-
-
+     public void deallocateWorker(UnitInPool scv) {
+        workerToBaseMap.remove(scv);
+     }
     private void rebalanceWorkers() {
-        List<Unit> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+        List<UnitInPool> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
         int workers = agent.observation().getFoodWorkers();
         int average = workers / bases.size();
-        List<Unit> basesOver = new ArrayList<>();
-        List<Unit> basesUnder = new ArrayList<>();
-        for (Unit base : bases) {
+        List<UnitInPool> basesOver = new ArrayList<>();
+        List<UnitInPool> basesUnder = new ArrayList<>();
+        for (UnitInPool base : bases) {
             int assignedWorkers = countAssignedWorkers(base);
             if (assignedWorkers > average) {
                 log.info("Base : " + base.getTag().toString() + " Assigned too many workers :" + assignedWorkers + " - average :" + average);
@@ -184,13 +189,13 @@ class General {
         }
     }
 
-    private int countAssignedWorkers(Unit unit) {
+    private int countAssignedWorkers(UnitInPool unit) {
         return getWorkersAssignedToUnit(unit).size();
     }
 
-    private ArrayList<Unit> getWorkersAssignedToUnit(Unit base) {
-        ArrayList<Unit> workers = new ArrayList<>();
-        for (Unit w : workerToBaseMap.keySet()) {
+    private ArrayList<UnitInPool> getWorkersAssignedToUnit(UnitInPool base) {
+        ArrayList<UnitInPool> workers = new ArrayList<>();
+        for (UnitInPool w : workerToBaseMap.keySet()) {
             if (workerToBaseMap.get(w).getTag().equals(base.getTag())) {
                 workers.add(w);
             }
@@ -198,48 +203,48 @@ class General {
         return workers;
     }
 
-    private void reassignWorkers(int number, Unit from, Unit to) {
-        ArrayList<Unit> workers = getWorkersAssignedToUnit(from);
-        Point2d location = to.getPosition().toPoint2d();
+    private void reassignWorkers(int number, UnitInPool from, UnitInPool to) {
+        ArrayList<UnitInPool> workers = getWorkersAssignedToUnit(from);
+        Point2d location = to.unit().getPosition().toPoint2d();
         for (int i = 0; i < number; i++) {
-            Unit scv = workers.get(i);
+            UnitInPool scv = workers.get(i);
             log.info("Reassigning worker :" + scv.getTag().toString() + " from " + from.getTag().toString() + " to " + to.getTag().toString());
             workerToBaseMap.put(scv, to);
-            if (to.getType().equals(TERRAN_COMMAND_CENTER)) {
+            if (to.unit().getType().equals(TERRAN_COMMAND_CENTER)) {
                 rebaseSCVToCommandCenter(location, scv);
             } else {
-                rebaseSCVToRefinary(to, scv);
+                rebaseSCVToRefinery(to, scv);
             }
         }
     }
 
-    private void handleIdleSCV(Unit scv) {
-        if (workerToBaseMap.containsKey(scv)) {
+    private void handleIdleSCV(UnitInPool unitInPool) {
+        if (workerToBaseMap.containsKey(unitInPool)) {
             log.info("Found idle scv, sending him back to work at ");
-            Unit destination = workerToBaseMap.get(scv);
-            if (destination.getType().equals(TERRAN_COMMAND_CENTER)) {
-                log.info("Found idle scv: " + scv.getTag() + ", sending him back to work at cc");
-                rebaseSCVToCommandCenter(destination.getPosition().toPoint2d(), scv);
+            UnitInPool destination = workerToBaseMap.get(unitInPool);
+            if (destination.unit().getType().equals(TERRAN_COMMAND_CENTER)) {
+                log.info("Found idle scv: " + unitInPool.unit().getTag() + ", sending him back to work at cc");
+                rebaseSCVToCommandCenter(destination.unit().getPosition().toPoint2d(), unitInPool);
             } else {
-                log.info("Found idle scv: " + scv.getTag() + ", sending him back to work at refinery");
-                rebaseSCVToRefinary(destination, scv);
+                log.info("Found idle scv: " + unitInPool.getTag() + ", sending him back to work at refinery");
+                rebaseSCVToRefinery(destination, unitInPool);
             }
         } else {
-            log.info("Found unassigned scv: "+scv.getTag()+", sending him back to work!");
-            onSCVCreated(scv);
+            log.info("Found unassigned scv: " + unitInPool.unit().getTag() + ", sending him back to work!");
+            onSCVCreated(unitInPool);
         }
     }
 
-    private void rebaseSCVToRefinary(Unit location, Unit scv) {
-        agent.actions().unitCommand(scv, Abilities.SMART, location, false);
+    private void rebaseSCVToRefinery(UnitInPool location, UnitInPool scv) {
+        agent.actions().unitCommand(scv.unit(), Abilities.SMART, location.unit(), false);
     }
 
-    private void rebaseSCVToCommandCenter(Point2d location, Unit scv) {
-        mapUtils.findNearestMineralPatch(location).ifPresent(mineralPath ->
-                agent.actions().unitCommand(scv, Abilities.SMART, mineralPath, false));
+    private void rebaseSCVToCommandCenter(Point2d location, UnitInPool scv) {
+        mapUtils.findNearestMineralPatch(location).ifPresent(mineralPatch ->
+                agent.actions().unitCommand(scv.unit(), Abilities.SMART, mineralPatch, false));
     }
 
-    private void onSoldierCreated(Unit unit, Units type) {
+    private void onSoldierCreated(UnitInPool unit, Units type) {
         if (currentSquad.getOrders().equals(Squad.Orders.DEFEND)) {
             currentSquad.addUnitAndGiveOrders(unit);
         } else {
@@ -251,19 +256,26 @@ class General {
 
     }
 
-    private void onSCVCreated(Unit scv) {
-        List<Unit> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
-        Unit destination = commandCenters.stream()
-                .filter(c -> c.getAssignedHarvesters().isPresent())
-                .min(Comparator.comparing(c -> c.getAssignedHarvesters().get()))
-                .orElse(null);
+    private void onSCVCreated(UnitInPool unitInPool) {
+        if (workerToBaseMap.containsKey(unitInPool)) {
+            UnitInPool target = workerToBaseMap.get(unitInPool);
+            log.info("Detected old worker re-creation");
+            log.info("Worker :" + unitInPool.unit().getTag() + " was assigned to " + target.unit().getType() + " number " + target.getTag());
+        } else {
+            List<UnitInPool> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+            UnitInPool destination = commandCenters.stream()
+                    .filter(c -> c.unit().getAssignedHarvesters().isPresent())
+                    .min(Comparator.comparing(c -> c.unit().getAssignedHarvesters().get()))
+                    .orElse(null);
 
-        if (destination == null) {
-            return;
+            if (destination == null) {
+                return;
+            }
+            workerToBaseMap.put(unitInPool, destination);
+            Point2d location = destination.unit().getPosition().toPoint2d();
+            mapUtils.findNearestMineralPatch(location).ifPresent(mineralPath ->
+                    agent.actions().unitCommand(unitInPool.unit(), Abilities.SMART, mineralPath, false));
         }
-        workerToBaseMap.put(scv, destination);
-        Point2d location = destination.getPosition().toPoint2d();
-        mapUtils.findNearestMineralPatch(location).ifPresent(mineralPath ->
-                agent.actions().unitCommand(scv, Abilities.SMART, mineralPath, false));
     }
 }
+

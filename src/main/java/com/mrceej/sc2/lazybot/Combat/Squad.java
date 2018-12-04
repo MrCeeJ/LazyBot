@@ -1,8 +1,8 @@
 package com.mrceej.sc2.lazybot.Combat;
 
 import com.github.ocraft.s2client.bot.S2Agent;
+import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
-import com.github.ocraft.s2client.protocol.unit.Unit;
 import com.mrceej.sc2.lazybot.MapUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.Getter;
@@ -21,20 +21,20 @@ public class Squad {
     @Getter
     private Orders orders;
     @Getter
-    private List<Unit> units;
+    private List<UnitInPool> UnitInPools;
 
     public Squad(S2Agent agent, Utils utils, MapUtils mapUtils) {
         this.agent = agent;
         this.utils = utils;
         this.mapUtils = mapUtils;
-        this.units = new ArrayList<>();
+        this.UnitInPools = new ArrayList<>();
         this.value = 0;
         this.orders = Orders.DEFEND;
     }
 
     private void updateValue() {
         int val = 0;
-        for (Unit u : units) {
+        for (UnitInPool u : UnitInPools) {
             val += utils.getMineralCost(u);
             val += (2 * utils.getGasCost(u));
         }
@@ -51,13 +51,13 @@ public class Squad {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
         boolean first = true;
-        for (Unit u : units) {
+        for (UnitInPool u : UnitInPools) {
             if (first) {
                 first = false;
             } else {
                 sb.append(",");
             }
-            sb.append(u.getType().toString());
+            sb.append(u.unit().getType().toString());
         }
         sb.append("]");
         return sb.toString();
@@ -65,14 +65,14 @@ public class Squad {
 
     public enum Orders {DEFEND, ATTACK}
 
-    public void addUnitAndGiveOrders(Unit unit) {
-        units.add(unit);
+    public void addUnitAndGiveOrders(UnitInPool UnitInPool) {
+        UnitInPools.add(UnitInPool);
 
         if (isReadyToAttack()) {
             this.orders = Orders.ATTACK;
             giveAttackOrder();
         } else {
-            giveDefaultOrder(unit);
+            giveDefaultOrder(UnitInPool);
         }
     }
 
@@ -81,14 +81,14 @@ public class Squad {
         return (value >= 1000);
     }
 
-    private void giveDefaultOrder(Unit unit) {
-        agent.actions().unitCommand(unit, Abilities.MOVE, mapUtils.getCCLocation(), false);
+    private void giveDefaultOrder(UnitInPool unit) {
+        agent.actions().unitCommand(unit.unit(), Abilities.MOVE, mapUtils.getCCLocation(), false);
     }
 
     private void giveAttackOrder() {
-        for (Unit u : units) {
+        for (UnitInPool u : UnitInPools) {
             mapUtils.findEnemyPosition().ifPresent(point2d ->
-                    agent.actions().unitCommand(u, Abilities.ATTACK_ATTACK, point2d, false));
+                    agent.actions().unitCommand(u.unit(), Abilities.ATTACK_ATTACK, point2d, false));
         }
     }
 

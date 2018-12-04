@@ -10,6 +10,8 @@ import com.github.ocraft.s2client.protocol.spatial.Point;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.github.ocraft.s2client.protocol.unit.Unit;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.*;
@@ -22,6 +24,8 @@ public class MapUtils {
 
     private final S2Agent agent;
     private Point STARTING_BASE_LOCATION;
+    @Getter @Setter
+    private UnitInPool startingBase;
     private Utils utils;
     // private List<Point> base_locations;
 
@@ -33,7 +37,6 @@ public class MapUtils {
         this.utils = utils;
         //  base_locations = agent.query().calculateExpansionLocations(agent.observation());
         STARTING_BASE_LOCATION = agent.observation().getStartLocation();
-
     }
 
     Point getStartingBaseLocation() {
@@ -54,48 +57,43 @@ public class MapUtils {
                 .orElseGet(null);
     }
 
-    Optional<Unit> findNearestBuilding(UnitType unitType, Point2d location) {
+    Optional<UnitInPool> findNearestBuilding(UnitType unitType, Point2d location) {
         return agent.observation().getUnits(Alliance.SELF).stream()
-                .map(UnitInPool::getUnit)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .filter(unit -> unit.getType().equals(unitType))
+                .filter(unit -> unit.unit().getType().equals(unitType))
                 .min(getLinearDistanceComparatorForUnit(location));
     }
 
+    Optional<UnitInPool> findNearestVespene(UnitInPool source) {
 
-    Optional<Unit> findNearestVespene(Point2d location) {
-
-        List<Unit> refineries = utils.getFinishedUnits(Units.TERRAN_REFINERY);
+        List<UnitInPool> refineries = utils.getFinishedUnits(Units.TERRAN_REFINERY);
 
         return agent.observation().getUnits(Alliance.NEUTRAL).stream()
-                .map(UnitInPool::getUnit)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .filter(unit -> unit.getType().equals(Units.NEUTRAL_VESPENE_GEYSER))
+                .filter(unit -> unit.unit().getType().equals(Units.NEUTRAL_VESPENE_GEYSER))
                 .filter(unit -> positionNotIn(unit, refineries))
-                .peek(u -> log.info("Distance to site :" + u.getTag() + " is " + agent.query().pathingDistance(u, location)))
-                .min(getLinearDistanceComparatorForUnit(location));
+                .peek(u -> log.info("Pathing distance to site :" + u.getTag() + " is " + agent.query().pathingDistance(u.unit(), source.unit().getPosition().toPoint2d())))
+                .peek(u -> log.info("Line distance to site :" + u.getTag() + " is " +u.unit().getPosition().toPoint2d().distance(source.unit().getPosition().toPoint2d())))
+                .min(getLinearDistanceComparatorForUnit(source.unit().getPosition().toPoint2d()));
     }
 
-    boolean positionNotIn(Unit unit, List<Unit> units) {
+    boolean positionNotIn(UnitInPool unit, List<UnitInPool> units) {
         return units.stream()
-                .map(Unit::getPosition)
-                .noneMatch(x -> x.equals(unit.getPosition()));
+                .map(u -> u.unit().getPosition())
+                .noneMatch(x -> x.equals(unit.unit().getPosition()));
     }
 
-    Comparator<Unit> getLinearDistanceComparatorForUnit(Point2d location) {
+    Comparator<UnitInPool> getLinearDistanceComparatorForUnit(Point2d location) {
         return (u1, u2) -> {
-            Double d1 = u1.getPosition().toPoint2d().distance(location);
-            Double d2 = u2.getPosition().toPoint2d().distance(location);
+            Double d1 = u1.unit().getPosition().toPoint2d().distance(location);
+            Double d2 = u2.unit().getPosition().toPoint2d().distance(location);
             return d1.compareTo(d2);
         };
     }
 
-    Comparator<Unit> getPathingDistanceComparatorForUnit(Point2d location) {
+    Comparator<Unit> getPathingDistanceComparatorForUnit(Unit unit) {
+        Point2d destination = unit.getPosition().toPoint2d();
         return (u1, u2) -> {
-            Float f1 = agent.query().pathingDistance(u1.getPosition().toPoint2d(), location);
-            Float f2 = agent.query().pathingDistance(u2.getPosition().toPoint2d(), location);
+            Float f1 = agent.query().pathingDistance(u1.getPosition().toPoint2d(), destination);
+            Float f2 = agent.query().pathingDistance(u2.getPosition().toPoint2d(), destination);
             return f1.compareTo(f2);
         };
     }
@@ -151,8 +149,8 @@ public class MapUtils {
         }
     }
 
-    Unit getRandomUnit(Units unitType) {
-        List<Unit> units = utils.getFinishedUnits(unitType);
+    UnitInPool getRandomUnit(Units unitType) {
+        List<UnitInPool> units = utils.getFinishedUnits(unitType);
         return units.get(ThreadLocalRandom.current().nextInt(units.size()));
     }
 
