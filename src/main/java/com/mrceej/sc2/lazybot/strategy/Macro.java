@@ -8,24 +8,21 @@ import lombok.extern.log4j.Log4j2;
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
-public class Macro implements Doctrine {
+public class Macro extends Doctrine {
 
-    private final S2Agent agent;
-    private Utils utils;
-    double urgency;
     private float income;
     private double expenditure;
 
     public Macro(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
+
     }
 
     @Override
-    public void calculateUrgency() {
+    public double calculateUrgency() {
         this.income = agent.observation().getScore().getDetails().getCollectionRateMinerals();
         this.expenditure = getExpenditure();
-        this.urgency = 21 * Utils.MARINE_COST_PER_MIN / (income - expenditure);
+        return 21 * Utils.MARINE_COST_PER_MIN / (income - expenditure);
     }
 
     @Override

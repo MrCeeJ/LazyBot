@@ -64,6 +64,11 @@ public class Utils {
         vespeneRate = agent.observation().getScore().getDetails().getCollectionRateVespene();
     }
 
+    public List<UnitInPool> getUnitsThatCanBuild(Units unitType){
+        Ability ability = UnitTypeToAbilityMap.get(unitType);
+        return agent.observation().getUnits(Alliance.SELF, unitInPool -> unitInPool.unit().getType().getAbilities().contains(ability));
+    }
+
     public int countFinishedUnitType(Units unitType) {
         return getFinishedUnits(unitType).size();
     }
@@ -131,11 +136,11 @@ public class Utils {
         return total;
     }
 
-    int getMineralCost(Units unit) {
+    public int getMineralCost(Units unit) {
         return agent.observation().getUnitTypeData(false).get(unit).getMineralCost().get();
     }
 
-    int getGasCost(Units unit) {
+    public int getGasCost(Units unit) {
         return agent.observation().getUnitTypeData(false).get(unit).getVespeneCost().get();
     }
 

@@ -1,6 +1,7 @@
 package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
+import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
@@ -9,22 +10,18 @@ import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_COMMAND_CENT
 import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_SCV;
 
 @Log4j2
-public class Economic implements Doctrine {
-
-    private final S2Agent agent;
-    private double urgency;
-    private Utils utils;
+public class Economic extends Doctrine {
 
     public Economic(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
+
     }
 
     @Override
-    public void calculateUrgency() {
+    public double calculateUrgency() {
         int totalSCVs = 116;
         int currentSCVs = utils.countFinishedUnitType(Units.TERRAN_SCV);
-        this.urgency = 100d * currentSCVs / totalSCVs;
+        return 100d * currentSCVs / totalSCVs;
     }
 
     @Override

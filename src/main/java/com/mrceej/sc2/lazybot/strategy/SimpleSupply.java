@@ -8,21 +8,18 @@ import lombok.extern.log4j.Log4j2;
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
-public class SimpleSupply implements Doctrine {
+public class SimpleSupply extends Doctrine {
 
-    private final S2Agent agent;
-    private double urgency;
-    private Utils utils;
     private int supplyBuffer = 2;
 
     public SimpleSupply(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
+
     }
 
     @Override
-    public void calculateUrgency() {
-        this.urgency = 0;
+    public double calculateUrgency(){
+        return 0;
     }
 
     @Override

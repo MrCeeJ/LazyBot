@@ -1,6 +1,5 @@
 package com.mrceej.sc2.lazybot.strategy;
 
-import SC2APIProtocol.Raw;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.mrceej.sc2.lazybot.Utils;
@@ -9,21 +8,15 @@ import lombok.extern.log4j.Log4j2;
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
-public class SimpleEconomyWithGas implements Doctrine {
-
-    private final S2Agent agent;
-    private double urgency;
-    private Utils utils;
-    private Units lastDesiredUnitType;
+public class SimpleEconomyWithGas extends Doctrine {
 
     public SimpleEconomyWithGas(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
     }
 
     @Override
-    public void calculateUrgency() {
-        this.urgency = 10;
+    public double calculateUrgency() {
+        return 10;
     }
 
     @Override
@@ -34,9 +27,9 @@ public class SimpleEconomyWithGas implements Doctrine {
 
         // Don;t crash if we are out of bases :)
         if (bases == 0) {
-            lastDesiredUnitType = TERRAN_COMMAND_CENTER;
+            setConstructionDesire(TERRAN_COMMAND_CENTER);
             if (minerals >= 400) {
-                return lastDesiredUnitType;
+                return TERRAN_COMMAND_CENTER;
             } else {
                 return Units.INVALID;
             }
@@ -45,16 +38,16 @@ public class SimpleEconomyWithGas implements Doctrine {
         if (utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0) {
             if ((workers / bases) > 16) {
                 if ((gases / bases) < 2) {
-                    lastDesiredUnitType = TERRAN_REFINERY;
+                    setConstructionDesire(TERRAN_REFINERY);
                     if (minerals >= 75) {
-                        return lastDesiredUnitType;
+                        return TERRAN_REFINERY;
                     } else {
                         return INVALID;
                     }
                 } else {
-                    lastDesiredUnitType = TERRAN_COMMAND_CENTER;
+                    setConstructionDesire(TERRAN_COMMAND_CENTER);
                     if (minerals >= 400) {
-                        return lastDesiredUnitType;
+                        return TERRAN_COMMAND_CENTER;
                     } else {
                         return Units.INVALID;
                     }
@@ -64,15 +57,15 @@ public class SimpleEconomyWithGas implements Doctrine {
 
         // If we can build a worker, do it
         if ((utils.countOfUnitUnderConstruction(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
-            lastDesiredUnitType = TERRAN_SCV;
+            setConstructionDesire(TERRAN_SCV);
             if (minerals >= 50) {
-                return lastDesiredUnitType;
+                return TERRAN_SCV;
             } else {
                 return Units.INVALID;
             }
         }
         // nothing to build
-        lastDesiredUnitType = null;
+        setConstructionDesire(null);
         return null;
     }
 
@@ -86,6 +79,6 @@ public class SimpleEconomyWithGas implements Doctrine {
         log.info("Economy : " + urgency);
         log.info("Workers in production :" + utils.countOfUnitUnderConstruction(TERRAN_SCV));
         log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
-        log.info("Currenty want a :" + lastDesiredUnitType);
+        log.info("Currenty want a :" + getConstructionDesire());
     }
 }

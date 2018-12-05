@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_COMMAND_CENTER;
+import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
 public class MapUtils {
@@ -67,11 +67,10 @@ public class MapUtils {
 
         List<UnitInPool> refineries = utils.getFinishedUnits(Units.TERRAN_REFINERY);
 
-        return agent.observation().getUnits(Alliance.NEUTRAL).stream()
-                .filter(unit -> unit.unit().getType().equals(Units.NEUTRAL_VESPENE_GEYSER))
+        return agent.observation().getUnits(Alliance.NEUTRAL, UnitInPool.isUnit(NEUTRAL_VESPENE_GEYSER)).stream()
                 .filter(unit -> positionNotIn(unit, refineries))
-                .peek(u -> log.info("Pathing distance to site :" + u.getTag() + " is " + agent.query().pathingDistance(u.unit(), source.unit().getPosition().toPoint2d())))
-                .peek(u -> log.info("Line distance to site :" + u.getTag() + " is " +u.unit().getPosition().toPoint2d().distance(source.unit().getPosition().toPoint2d())))
+//                .peek(u -> log.info("Pathing distance to site :" + u.getTag() + " is " + agent.query().pathingDistance(u.unit(), source.unit().getPosition().toPoint2d())))
+//                .peek(u -> log.info("Line distance to site :" + u.getTag() + " is " +u.unit().getPosition().toPoint2d().distance(source.unit().getPosition().toPoint2d())))
                 .min(getLinearDistanceComparatorForUnit(source.unit().getPosition().toPoint2d()));
     }
 
@@ -115,18 +114,16 @@ public class MapUtils {
     }
 
     Optional<Unit> findNearestMineralPatch(Point2d start) {
-        List<UnitInPool> units = agent.observation().getUnits(Alliance.NEUTRAL);
+        List<UnitInPool> units = agent.observation().getUnits(Alliance.NEUTRAL, UnitInPool.isUnit(NEUTRAL_MINERAL_FIELD));
         double distance = Double.MAX_VALUE;
         Unit target = null;
         for (UnitInPool unitInPool : units) {
             Unit unit = unitInPool.unit();
-            if (unit.getType().equals(Units.NEUTRAL_MINERAL_FIELD)) {
-                double d = unit.getPosition().toPoint2d().distance(start);
+                double d = unit.getPosition().toPoint2d().distance(start); //TODO: Use real pathing plx
                 if (d < distance) {
                     distance = d;
                     target = unit;
                 }
-            }
         }
         return Optional.ofNullable(target);
     }

@@ -6,20 +6,15 @@ import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class Tech implements Doctrine {
-
-    private final S2Agent agent;
-    private Utils utils;
-    double urgency;
+public class Tech extends Doctrine {
 
     public Tech(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
     }
 
     @Override
-    public void calculateUrgency() {
-        urgency = 100;
+    public double calculateUrgency() {
+        return 100;
     }
 
     @Override

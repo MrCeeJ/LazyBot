@@ -35,7 +35,7 @@ class LazyBot extends S2Agent {
 
     @Override
     public void onStep() {
-        if (observation().getGameLoop() % 50 == 0) {
+        if (observation().getGameLoop() % 200 == 0) {
             log.info("Game loop count :" + observation().getGameLoop());
             log.info("Minerals :" + observation().getMinerals() + " (" + utils.mineralRate + "/min)");
             log.info("Vespene :" + observation().getVespene() + " (" + utils.vespeneRate + "/min)");

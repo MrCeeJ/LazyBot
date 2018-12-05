@@ -3,6 +3,7 @@ package com.mrceej.sc2.lazybot.Combat;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
+import com.github.ocraft.s2client.protocol.data.Units;
 import com.mrceej.sc2.lazybot.MapUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.Getter;
@@ -21,20 +22,20 @@ public class Squad {
     @Getter
     private Orders orders;
     @Getter
-    private List<UnitInPool> UnitInPools;
+    private List<UnitInPool> units;
 
     public Squad(S2Agent agent, Utils utils, MapUtils mapUtils) {
         this.agent = agent;
         this.utils = utils;
         this.mapUtils = mapUtils;
-        this.UnitInPools = new ArrayList<>();
+        this.units = new ArrayList<>();
         this.value = 0;
         this.orders = Orders.DEFEND;
     }
 
     private void updateValue() {
         int val = 0;
-        for (UnitInPool u : UnitInPools) {
+        for (UnitInPool u : units) {
             val += utils.getMineralCost(u);
             val += (2 * utils.getGasCost(u));
         }
@@ -51,7 +52,7 @@ public class Squad {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
         boolean first = true;
-        for (UnitInPool u : UnitInPools) {
+        for (UnitInPool u : units) {
             if (first) {
                 first = false;
             } else {
@@ -65,14 +66,15 @@ public class Squad {
 
     public enum Orders {DEFEND, ATTACK}
 
-    public void addUnitAndGiveOrders(UnitInPool UnitInPool) {
-        UnitInPools.add(UnitInPool);
+    public void addUnitAndGiveOrders(UnitInPool unit) {
+        units.add(unit);
 
         if (isReadyToAttack()) {
             this.orders = Orders.ATTACK;
             giveAttackOrder();
         } else {
-            giveDefaultOrder(UnitInPool);
+            this.orders = Orders.DEFEND;
+            giveDefendOrder(unit);
         }
     }
 
@@ -81,12 +83,22 @@ public class Squad {
         return (value >= 1000);
     }
 
+    private void giveDefendOrder(UnitInPool unit) {
+        givePatrolBasesOrder(unit);
+    }
+
+    private void givePatrolBasesOrder(UnitInPool unit) {
+        utils.getFinishedUnits(Units.TERRAN_COMMAND_CENTER)
+                .forEach(base -> agent.actions().unitCommand(unit.unit(), Abilities.PATROL, base.unit(), true));
+    }
+
+
     private void giveDefaultOrder(UnitInPool unit) {
         agent.actions().unitCommand(unit.unit(), Abilities.MOVE, mapUtils.getCCLocation(), false);
     }
 
     private void giveAttackOrder() {
-        for (UnitInPool u : UnitInPools) {
+        for (UnitInPool u : units) {
             mapUtils.findEnemyPosition().ifPresent(point2d ->
                     agent.actions().unitCommand(u.unit(), Abilities.ATTACK_ATTACK, point2d, false));
         }

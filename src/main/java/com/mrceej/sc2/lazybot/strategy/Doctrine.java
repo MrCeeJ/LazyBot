@@ -1,25 +1,51 @@
 package com.mrceej.sc2.lazybot.strategy;
 
+import com.github.ocraft.s2client.bot.S2Agent;
+import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.Utils;
+import lombok.Getter;
+import lombok.Setter;
 
-public interface Doctrine extends Comparable<Doctrine> {
+public abstract class Doctrine implements Comparable<Doctrine> {
 
+
+    final S2Agent agent;
+    final Utils utils;
     double urgency = 100d;
 
-    default int compareTo(Doctrine d) {
+    @Setter
+    @Getter
+    UnitType constructionDesire = null;
+
+    Doctrine(S2Agent agent, Utils utils) {
+        this.agent = agent;
+        this.utils = utils;
+    }
+
+    boolean canBuildAdditionalUnit(Units unit, int minerals, int gas) {
+        if (utils.getMineralCost(unit) > minerals || utils.getGasCost(unit) > gas)
+            return false;
+
+        return utils.getUnitsThatCanBuild(unit).stream()
+                .filter(u -> u.unit().getBuildProgress() < 1f)
+                .anyMatch(u -> u.unit().getOrders().size() == 0);
+    }
+
+    public int compareTo(Doctrine d) {
         return Double.compare(this.getUrgency(), d.getUrgency());
     }
 
-    default double getUrgency() {
-        this.calculateUrgency();
+    double getUrgency() {
+        this.urgency = calculateUrgency();
         return urgency;
     }
 
-     void calculateUrgency();
+    abstract double calculateUrgency();
 
-    Units getConstructionOrder(int minerals, int gas);
+    public abstract Units getConstructionOrder(int minerals, int gas);
 
-    String getName();
+    public abstract String getName();
 
-    void debugStatus();
+    public abstract void debugStatus();
 }

@@ -1,7 +1,6 @@
 package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
-import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
@@ -10,21 +9,17 @@ import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_BARRACKS;
 import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_MARINE;
 
 @Log4j2
-public class SimpleMacro implements Doctrine {
+public class SimpleMacro extends Doctrine {
 
-    private final S2Agent agent;
-    private Utils utils;
-    double urgency;
     private Units lastDesiredUnit;
 
     public SimpleMacro(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
     }
 
     @Override
-    public void calculateUrgency() {
-        this.urgency = 20;
+    public double calculateUrgency() {
+        return 20;
     }
 
     @Override
@@ -53,6 +48,6 @@ public class SimpleMacro implements Doctrine {
         log.info(this::getName);
         log.info("Barracks :" + utils.countFinishedUnitType(TERRAN_BARRACKS));
         log.info("Marines in construction : " + utils.countOfUnitUnderConstruction(TERRAN_MARINE));
-        log.info("Currently wanting a : "+lastDesiredUnit);
+        log.info("Currently wanting a : " + lastDesiredUnit);
     }
 }

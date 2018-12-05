@@ -9,20 +9,16 @@ import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_COMMAND_CENT
 import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_SCV;
 
 @Log4j2
-public class SimpleEconomic implements Doctrine {
-
-    private final S2Agent agent;
-    private double urgency;
-    private Utils utils;
+public class SimpleEconomic extends Doctrine {
 
     public SimpleEconomic(S2Agent agent, Utils utils) {
-        this.agent = agent;
-        this.utils = utils;
+        super(agent, utils);
+
     }
 
     @Override
-    public void calculateUrgency() {
-        this.urgency = 10;
+    public double calculateUrgency() {
+        return 10;
     }
 
     @Override
@@ -32,6 +28,7 @@ public class SimpleEconomic implements Doctrine {
 
         // If we need a new cc, save up
         if (utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0){
+            this.setConstructionDesire(TERRAN_COMMAND_CENTER);
             if ((workers / bases) > 16) {
                 if (minerals >= 400) {
                     return TERRAN_COMMAND_CENTER;
@@ -42,6 +39,7 @@ public class SimpleEconomic implements Doctrine {
         }
         // If we can build a worker, do it
         if ((utils.countOfUnitUnderConstruction(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+            this.setConstructionDesire(TERRAN_SCV);
             if (minerals >= 50) {
                 return TERRAN_SCV;
             } else {

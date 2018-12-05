@@ -1,15 +1,22 @@
 package com.mrceej.sc2.lazybot.strategy;
 
+import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.Utils;
 
 import java.util.List;
 
-public class TvPTimingAttack implements Doctrine {
+public class TvPTimingAttack extends Doctrine {
 
+
+    public TvPTimingAttack(S2Agent agent, Utils utils) {
+        super(agent, utils);
+    }
 
     @Override
-    public void calculateUrgency() {
+    public double calculateUrgency() {
 
+        return 0;
     }
 
     private int buildOrderPosition = 0;
