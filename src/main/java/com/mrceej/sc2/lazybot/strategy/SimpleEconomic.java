@@ -2,6 +2,7 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.BuildUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
@@ -11,8 +12,8 @@ import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_SCV;
 @Log4j2
 public class SimpleEconomic extends Doctrine {
 
-    public SimpleEconomic(S2Agent agent, Utils utils) {
-        super(agent, utils);
+    public SimpleEconomic(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+        super(agent, utils, buildUtils);
 
     }
 
@@ -27,7 +28,7 @@ public class SimpleEconomic extends Doctrine {
         int bases = utils.countOfUnitsIncludingUnderConstruction(TERRAN_COMMAND_CENTER);
 
         // If we need a new cc, save up
-        if (utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0){
+        if (utils.countOfUnitsBuildingUnit(TERRAN_COMMAND_CENTER) == 0){
             this.setConstructionDesire(TERRAN_COMMAND_CENTER);
             if ((workers / bases) > 16) {
                 if (minerals >= 400) {
@@ -38,7 +39,7 @@ public class SimpleEconomic extends Doctrine {
             }
         }
         // If we can build a worker, do it
-        if ((utils.countOfUnitUnderConstruction(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+        if ((utils.countOfUnitsBuildingUnit(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
             this.setConstructionDesire(TERRAN_SCV);
             if (minerals >= 50) {
                 return TERRAN_SCV;
@@ -58,7 +59,7 @@ public class SimpleEconomic extends Doctrine {
     @Override
     public void debugStatus() {
         log.info("Economy : " + urgency);
-        log.info("Workers in production :" + utils.countOfUnitUnderConstruction(TERRAN_SCV));
+        log.info("Workers in production :" + utils.countOfUnitsBuildingUnit(TERRAN_SCV));
         log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
     }
 

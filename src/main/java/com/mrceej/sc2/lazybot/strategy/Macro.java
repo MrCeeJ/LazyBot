@@ -2,6 +2,7 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.BuildUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
@@ -13,8 +14,8 @@ public class Macro extends Doctrine {
     private float income;
     private double expenditure;
 
-    public Macro(S2Agent agent, Utils utils) {
-        super(agent, utils);
+    public Macro(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+        super(agent, utils, buildUtils);
 
     }
 
@@ -28,7 +29,7 @@ public class Macro extends Doctrine {
     @Override
     public Units getConstructionOrder(int minerals, int gas) {
 
-        if ((utils.countOfUnitUnderConstruction(TERRAN_MARINE) < utils.countFinishedUnitType(TERRAN_BARRACKS))) {
+        if ((utils.countOfUnitsBuildingUnit(TERRAN_MARINE) < utils.countFinishedUnitType(TERRAN_BARRACKS))) {
             if (minerals > 50) {
                 return Units.TERRAN_MARINE;
             } else {
@@ -49,8 +50,8 @@ public class Macro extends Doctrine {
 
     double getPlannedExpenditure() {
         double total = getExpenditure();
-        total += utils.countOfUnitUnderConstruction(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN;
-        total += utils.countOfUnitUnderConstruction(Units.TERRAN_COMMAND_CENTER) * Utils.WORKER_COST_PER_MIN;
+        total += utils.countOfUnitsBuildingUnit(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN;
+        total += utils.countOfUnitsBuildingUnit(Units.TERRAN_COMMAND_CENTER) * Utils.WORKER_COST_PER_MIN;
 
         return total;
     }
@@ -64,7 +65,7 @@ public class Macro extends Doctrine {
     public void debugStatus() {
         log.info("Macro: +" + income + " -" + expenditure + " -> urgency : " + urgency);
         log.info("Barracks :" + utils.countFinishedUnitType(TERRAN_BARRACKS));
-        log.info("Marines in construction : " + utils.countOfUnitUnderConstruction(TERRAN_MARINE));
+        log.info("Marines in construction : " + utils.countOfUnitsBuildingUnit(TERRAN_MARINE));
 
     }
 }

@@ -2,6 +2,7 @@ package com.mrceej.sc2.lazybot;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
+import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.game.raw.StartRaw;
@@ -145,6 +146,13 @@ public class MapUtils {
             return Optional.empty();
         }
     }
+
+    Optional<UnitInPool> getNearestFreeWorker(Point2d location) {
+        return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_SCV)).stream()
+                .filter(unit -> unit.unit().getOrders().get(0).getAbility().equals(Abilities.HARVEST_GATHER))
+                .min(getLinearDistanceComparatorForUnit(location));
+    }
+
 
     UnitInPool getRandomUnit(Units unitType) {
         List<UnitInPool> units = utils.getFinishedUnits(unitType);

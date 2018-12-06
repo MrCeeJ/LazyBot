@@ -1,8 +1,8 @@
 package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
-import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.BuildUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
@@ -12,8 +12,8 @@ import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_SCV;
 @Log4j2
 public class Economic extends Doctrine {
 
-    public Economic(S2Agent agent, Utils utils) {
-        super(agent, utils);
+    public Economic(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+        super(agent, utils, buildUtils);
 
     }
 
@@ -29,14 +29,14 @@ public class Economic extends Doctrine {
         int workers = agent.observation().getFoodWorkers();
         int bases = utils.countOfUnitsIncludingUnderConstruction(TERRAN_COMMAND_CENTER);
         if (bases > 0) {
-            if ((utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0) && (workers / bases) > 14) {
+            if ((utils.countOfUnitsBuildingUnit(TERRAN_COMMAND_CENTER) == 0) && (workers / bases) > 14) {
                 if (minerals >= 400) {
                     return TERRAN_COMMAND_CENTER;
                 } else {
                     //log.info(" .. Saving up for a command center");
                     return Units.INVALID;
                 }
-            } else if ((utils.countOfUnitUnderConstruction(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+            } else if ((utils.countOfUnitsBuildingUnit(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
                 if (minerals >= 50) {
                     return TERRAN_SCV;
                 } else {
@@ -59,7 +59,7 @@ public class Economic extends Doctrine {
     @Override
     public void debugStatus() {
         log.info("Economy : " + urgency);
-        log.info("Workers in production :" + utils.countOfUnitUnderConstruction(TERRAN_SCV));
+        log.info("Workers in production :" + utils.countOfUnitsBuildingUnit(TERRAN_SCV));
         log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
     }
 

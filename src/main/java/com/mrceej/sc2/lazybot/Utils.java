@@ -5,13 +5,12 @@ import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Ability;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
-import com.github.ocraft.s2client.protocol.unit.Unit;
-import com.github.ocraft.s2client.protocol.unit.UnitSnapshot;
+import com.github.ocraft.s2client.protocol.unit.UnitOrder;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
@@ -83,43 +82,35 @@ public class Utils {
 
 
     public int countOfUnitsIncludingUnderConstruction(Units unit) {
-        return countFinishedUnitType(unit) + countOfUnitUnderConstruction(unit);
+        return countFinishedUnitType(unit) + countOfUnitsBuildingUnit(unit);
     }
 
-    public int countOfUnitUnderConstruction(Units unitType) {
+    public int countOfUnitsBuildingUnit(Units unitType) {
+        return getUnitsBuildingUnit(unitType).size();
+    }
 
-        return (int) agent.observation().getUnits().stream()
-                .map(UnitInPool::getUnit)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .map(UnitSnapshot::getOrders)
-                .flatMap(Collection::stream)
-                .filter(unitOrder -> (unitOrder.getAbility().equals(getAbilityToBuildUnit(unitType))))
-                .count();
+    public List<UnitInPool> getUnitsBuildingUnit(Units unitType) {
+        return agent.observation().getUnits(Alliance.SELF, isBuildingUnit(unitType));
+    }
 
-//        return (int) agent.observation().getUnits().stream()
-//                .filter(unit -> unit.getUnit().isPresent())
-//                .map(UnitInPool::getUnit)
-//                .filter(Optional::isPresent)
-//                .map(Optional::get)
-//                .map(UnitSnapshot::getOrders)
-//                .flatMap(Collection::stream)
-//                .filter(unitOrder -> (unitOrder.getAbility().equals(UnitTypeToAbilityMap.get(unitType))))
-//                .count();
+    public Predicate<UnitInPool> isBuildingUnit(Units unitType) {
+        Ability ability = getAbilityToBuildUnit(unitType);
+        return unitInPool -> unitInPool.unit().getOrders().stream()
+                .map(UnitOrder::getAbility)
+                .anyMatch(a -> a.equals(ability));
+    }
 
-//        List<UnitInPool> units = agent.observation().getUnits();
-//        int count = 0;
-//        for (UnitInPool u : units) {
-//            if (u.getUnit().isPresent()) {
-//                List<UnitOrder> orders = u.getUnit().get().getOrders();
-//                for (UnitOrder order : orders) {
-//                    if (order.getAbility().equals(UnitTypeToAbilityMap.get(unitType))) {
-//                        count++;
-//                    }
-//                }
-//            }
-//        }
-//        return count;
+    public int countOfUnitsBeingBuilt(Units unitType) {
+        return getUnitsBeingBuilt(unitType).size();
+    }
+
+    public List<UnitInPool> getUnitsBeingBuilt(Units unitType) {
+        return agent.observation().getUnits(Alliance.SELF, isBeingBuilt(unitType));
+    }
+
+    public Predicate<UnitInPool> isBeingBuilt(Units unitType) {
+        return unitInPool -> unitInPool.unit().getType().equals(unitType)
+                && unitInPool.unit().getBuildProgress()<1f;
     }
 
     public int getMaxSupplyProduction() {
@@ -131,8 +122,8 @@ public class Utils {
 
     public int getSupplyInProgress() {
         int total = 0;
-        total += (countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) * 10);
-        total += (countOfUnitUnderConstruction(Units.TERRAN_SUPPLY_DEPOT) * 8);
+        total += (countOfUnitsBuildingUnit(TERRAN_COMMAND_CENTER) * 10);
+        total += (countOfUnitsBuildingUnit(Units.TERRAN_SUPPLY_DEPOT) * 8);
         return total;
     }
 

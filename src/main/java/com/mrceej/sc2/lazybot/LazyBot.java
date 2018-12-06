@@ -14,12 +14,15 @@ class LazyBot extends S2Agent {
     private General general = new General(this);
     private MapUtils mapUtils = new MapUtils(this);
     private Utils utils = new Utils(this);
+    private BuildUtils buildUtils = new BuildUtils(this);
+    private int previousMinerals = 0;
 
     private void init() {
         mapUtils.init(utils);
-        strategy.init(utils);
-        fabrication.init(general, strategy, mapUtils, utils);
-        general.init(utils, mapUtils);
+        strategy.init(utils, buildUtils);
+        buildUtils.init(utils, mapUtils);
+        fabrication.init(strategy, utils, buildUtils);
+        general.init(utils, mapUtils, fabrication);
     }
 
     private void runAI() {
@@ -29,18 +32,18 @@ class LazyBot extends S2Agent {
 
     @Override
     public void onGameStart() {
-        log.info("Hello world of Starcraft II bots! com.mrceej.sc2.lazybot.LazyBot here!");
+        log.info("Hello world of Starcraft II bots! LazyBot here!");
         init();
     }
 
     @Override
     public void onStep() {
-        if (observation().getGameLoop() % 200 == 0) {
+        int minerals = observation().getMinerals();
+        if (observation().getGameLoop() % 200 == 0 || (minerals % 25 == 0 && minerals != previousMinerals)) {
             log.info("Game loop count :" + observation().getGameLoop());
             log.info("Minerals :" + observation().getMinerals() + " (" + utils.mineralRate + "/min)");
             log.info("Vespene :" + observation().getVespene() + " (" + utils.vespeneRate + "/min)");
-        } else if (observation().getGameLoop() % 200 == 0) {
-            log.info("Game loop count :" + observation().getGameLoop());
+            previousMinerals = minerals;
         }
         runAI();
     }
@@ -71,7 +74,7 @@ class LazyBot extends S2Agent {
     }
 
     @Override
-public void onGameFullStart() {
+    public void onGameFullStart() {
     }
 
     @Override

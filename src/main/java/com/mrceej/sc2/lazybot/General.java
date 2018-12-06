@@ -27,6 +27,7 @@ class General {
     private Squad currentSquad;
 
     private boolean firstCommandCenter = true;
+    private Fabrication fab;
 
     General(S2Agent agent) {
         this.agent = agent;
@@ -34,16 +35,18 @@ class General {
         this.workerToBaseMap = new HashMap<>();
     }
 
-    void init(Utils utils, MapUtils mapUtils) {
+    void init(Utils utils, MapUtils mapUtils, Fabrication fab) {
         this.utils = utils;
         this.mapUtils = mapUtils;
         this.currentSquad = new Squad(agent, utils, mapUtils);
+        this.fab = fab;
         squads.add(currentSquad);
     }
 
     void onUnitCreated(UnitInPool unitInPool) {
         log.info("Created unit :" + unitInPool.getTag() + " :" + unitInPool.unit().getType());
         Units unitType = (Units) unitInPool.unit().getType();
+        fab.updateBuild(unitType);
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
                 if (firstCommandCenter) {
@@ -142,19 +145,24 @@ class General {
                 break;
         }
     }
+    // TODO: add the below to other uses of TERRAN_COMMAND_CENTER
+    // bases.addAll(utils.getFinishedUnits(TERRAN_ORBITAL_COMMAND));
+    //        bases.addAll(utils.getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
 
     private void allocateWorkersToGas(UnitInPool refinery, int number) {
         List<UnitInPool> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+        bases.addAll(utils.getFinishedUnits(TERRAN_ORBITAL_COMMAND));
+        bases.addAll(utils.getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
         bases.sort(mapUtils.getLinearDistanceComparatorForUnit(refinery.unit().getPosition().toPoint2d()));
         int found = 0;
         for (UnitInPool base : bases) {
-            int workersAvailble = countAssignedWorkers(base);
-            if (workersAvailble >= number - found) {
+            int workersAvailable = countAssignedWorkers(base);
+            if (workersAvailable >= number - found) {
                 reassignWorkers(number, base, refinery);
                 break;
             } else {
-                reassignWorkers(workersAvailble, base, refinery);
-                found += workersAvailble;
+                reassignWorkers(workersAvailable, base, refinery);
+                found += workersAvailable;
                 if (found >= number)
                     break;
             }
@@ -165,6 +173,9 @@ class General {
      }
     private void rebalanceWorkers() {
         List<UnitInPool> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+        bases.addAll(utils.getFinishedUnits(TERRAN_ORBITAL_COMMAND));
+        bases.addAll(utils.getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
+
         int workers = agent.observation().getFoodWorkers();
         int average = workers / bases.size();
         List<UnitInPool> basesOver = new ArrayList<>();
@@ -210,7 +221,10 @@ class General {
             UnitInPool scv = workers.get(i);
             log.info("Reassigning worker :" + scv.getTag().toString() + " from " + from.getTag().toString() + " to " + to.getTag().toString());
             workerToBaseMap.put(scv, to);
-            if (to.unit().getType().equals(TERRAN_COMMAND_CENTER)) {
+            if (to.unit().getType().equals(TERRAN_COMMAND_CENTER) ||
+                    to.unit().getType().equals(TERRAN_PLANETARY_FORTRESS) ||
+                            to.unit().getType().equals(TERRAN_ORBITAL_COMMAND )) {
+
                 rebaseSCVToCommandCenter(location, scv);
             } else {
                 rebaseSCVToRefinery(to, scv);

@@ -2,6 +2,7 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.BuildUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
@@ -10,8 +11,8 @@ import static com.github.ocraft.s2client.protocol.data.Units.*;
 @Log4j2
 public class SimpleEconomyWithGas extends Doctrine {
 
-    public SimpleEconomyWithGas(S2Agent agent, Utils utils) {
-        super(agent, utils);
+    public SimpleEconomyWithGas(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+        super(agent, utils, buildUtils);
     }
 
     @Override
@@ -35,7 +36,7 @@ public class SimpleEconomyWithGas extends Doctrine {
             }
         }
         // If we need a new cc, save up
-        if (utils.countOfUnitUnderConstruction(TERRAN_COMMAND_CENTER) == 0) {
+        if (utils.countOfUnitsBuildingUnit(TERRAN_COMMAND_CENTER) == 0) {
             if ((workers / bases) > 16) {
                 if ((gases / bases) < 2) {
                     setConstructionDesire(TERRAN_REFINERY);
@@ -56,7 +57,7 @@ public class SimpleEconomyWithGas extends Doctrine {
         }
 
         // If we can build a worker, do it
-        if ((utils.countOfUnitUnderConstruction(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+        if ((utils.countOfUnitsBuildingUnit(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
             setConstructionDesire(TERRAN_SCV);
             if (minerals >= 50) {
                 return TERRAN_SCV;
@@ -77,7 +78,7 @@ public class SimpleEconomyWithGas extends Doctrine {
     @Override
     public void debugStatus() {
         log.info("Economy : " + urgency);
-        log.info("Workers in production :" + utils.countOfUnitUnderConstruction(TERRAN_SCV));
+        log.info("Workers in production :" + utils.countOfUnitsBuildingUnit(TERRAN_SCV));
         log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
         log.info("Currenty want a :" + getConstructionDesire());
     }

@@ -1,6 +1,8 @@
 package com.mrceej.sc2.lazybot;
 
+import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.S2Coordinator;
+import com.github.ocraft.s2client.bot.setting.PlayerSettings;
 import com.github.ocraft.s2client.protocol.game.BattlenetMap;
 import com.github.ocraft.s2client.protocol.game.Difficulty;
 import com.github.ocraft.s2client.protocol.game.Race;
@@ -8,12 +10,14 @@ import com.github.ocraft.s2client.protocol.game.Race;
 public class BotClient {
 
     public static void main(String[] args) {
-        LazyBot bot = new LazyBot();
+
+        PlayerSettings  opponent = getComputerOpponent();
+        S2Agent bot = getPlayerBot();
+        Race race = getPlayerRace();
         S2Coordinator s2Coordinator = S2Coordinator.setup()
                 .loadSettings(args)
-                .setParticipants(
-                        S2Coordinator.createParticipant(Race.TERRAN, bot),
-                        S2Coordinator.createComputer(Race.PROTOSS, Difficulty.HARDER))
+                .setParticipants(S2Coordinator.createParticipant(race, bot),
+                        opponent)
 //                        S2Coordinator.createComputer(Race.ZERG, Difficulty.MEDIUM_HARD))
 //                      S2Coordinator.createComputer(Race.TERRAN, Difficulty.MEDIUM_HARD))
                 .launchStarcraft()
@@ -23,5 +27,19 @@ public class BotClient {
         }
 
         s2Coordinator.quit();
+    }
+
+    private static Race getPlayerRace() {
+        return Race.TERRAN;
+    }
+
+    private static S2Agent getPlayerBot() {
+
+        // Check for opponents here
+        return new LazyBot();
+    }
+
+    private static PlayerSettings getComputerOpponent() {
+        return S2Coordinator.createComputer(Race.PROTOSS, Difficulty.HARDER);
     }
 }

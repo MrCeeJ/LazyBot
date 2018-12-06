@@ -23,26 +23,26 @@ class Strategy {
 
         mode = Mode.basicBuildOrder;
     }
-    void init(Utils utils) {
+    void init(Utils utils, BuildUtils buildUtils) {
         switch (mode) {
             case basicBuildOrder:
-                doctrines.add(new BasicBuildOrder(agent, utils));
+                doctrines.add(new BasicBuildOrder(agent, utils, buildUtils));
                 break;
             case rush:
-                doctrines.add(new TvPTimingAttack(agent, utils));
+                doctrines.add(new TvPTimingAttack(agent, utils, buildUtils));
                 break;
             case basic:
-                doctrines.add(new SimpleSupply(agent, utils));
-                doctrines.add(new Economic(agent, utils));
-                doctrines.add(new Macro(agent, utils));
-                doctrines.add(new Tech(agent, utils));
+                doctrines.add(new SimpleSupply(agent, utils, buildUtils));
+                doctrines.add(new Economic(agent, utils, buildUtils));
+                doctrines.add(new Macro(agent, utils, buildUtils));
+                doctrines.add(new Tech(agent, utils, buildUtils));
                 break;
             default:
             case simple:
-                doctrines.add(new SimpleSupply(agent, utils));
-                doctrines.add(new SimpleEconomyWithGas(agent, utils));
-                doctrines.add(new SimpleMacro(agent, utils));
-                doctrines.add(new Tech(agent, utils));
+                doctrines.add(new SimpleSupply(agent, utils, buildUtils));
+                doctrines.add(new SimpleEconomyWithGas(agent, utils, buildUtils));
+                doctrines.add(new SimpleMacro(agent, utils, buildUtils));
+                doctrines.add(new Tech(agent, utils, buildUtils));
                 break;
         }
     }

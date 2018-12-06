@@ -2,6 +2,7 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.BuildUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
@@ -16,8 +17,8 @@ public class BasicBuildOrder extends Doctrine {
 
     private int currentOrderCount = 1;
 
-    public BasicBuildOrder(S2Agent agent, Utils utils) {
-        super(agent, utils);
+    public BasicBuildOrder(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+        super(agent, utils, buildUtils);
     }
 
     private List<Units> unitPriority = List.of(TERRAN_SCV, TERRAN_MARINE, TERRAN_HELLION, TERRAN_BANSHEE);
@@ -117,7 +118,8 @@ public class BasicBuildOrder extends Doctrine {
 
         if (buildOrderMap.size() >= currentOrderCount) {
             Units building = buildOrderMap.get(currentOrderCount);
-            if (utils.getMineralCost(building) <= minerals && utils.getGasCost(building) <= gas) {
+            if (buildUtils.canBuildBuilding(building)) {
+
                 currentOrderCount++;
                 log.info("BBO wants to build :" + building);
                 setConstructionDesire(building);

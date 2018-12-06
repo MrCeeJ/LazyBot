@@ -2,6 +2,7 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.BuildUtils;
 import com.mrceej.sc2.lazybot.Utils;
 import lombok.extern.log4j.Log4j2;
 
@@ -12,8 +13,8 @@ public class SimpleSupply extends Doctrine {
 
     private int supplyBuffer = 2;
 
-    public SimpleSupply(S2Agent agent, Utils utils) {
-        super(agent, utils);
+    public SimpleSupply(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+        super(agent, utils, buildUtils);
 
     }
 
