@@ -45,7 +45,7 @@ public class MapUtils {
     }
 
     public Point2d getCCLocation() {
-        List<UnitInPool> cc = agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_COMMAND_CENTER));
+        List<UnitInPool> cc = utils.getAllMyFinishedBases();
         if (cc.size() > 0)
             return cc.get(0).unit().getPosition().toPoint2d();
 

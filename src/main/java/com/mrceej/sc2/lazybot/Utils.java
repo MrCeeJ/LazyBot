@@ -4,6 +4,7 @@ import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Ability;
+import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
 import com.github.ocraft.s2client.protocol.unit.UnitOrder;
@@ -63,7 +64,7 @@ public class Utils {
         vespeneRate = agent.observation().getScore().getDetails().getCollectionRateVespene();
     }
 
-    public List<UnitInPool> getUnitsThatCanBuild(Units unitType){
+    public List<UnitInPool> getUnitsThatCanBuild(Units unitType) {
         Ability ability = UnitTypeToAbilityMap.get(unitType);
         return agent.observation().getUnits(Alliance.SELF, unitInPool -> unitInPool.unit().getType().getAbilities().contains(ability));
     }
@@ -78,7 +79,6 @@ public class Utils {
                 .filter(u -> u.unit().getBuildProgress() == 1f)
                 .collect(Collectors.toList());
     }
-
 
 
     public int countOfUnitsIncludingUnderConstruction(Units unit) {
@@ -110,12 +110,12 @@ public class Utils {
 
     public Predicate<UnitInPool> isBeingBuilt(Units unitType) {
         return unitInPool -> unitInPool.unit().getType().equals(unitType)
-                && unitInPool.unit().getBuildProgress()<1f;
+                && unitInPool.unit().getBuildProgress() < 1f;
     }
 
     public int getMaxSupplyProduction() {
         int total = 0;
-        total += agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_COMMAND_CENTER)).size();
+        total += getAllMyFinishedBases().size();
         total += (agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_BARRACKS)).size() * 2);
         return total;
     }
@@ -142,5 +142,22 @@ public class Utils {
     public int getGasCost(UnitInPool unit) {
         return getGasCost((Units) Units.from(unit.unit().getType().getUnitTypeId()));
 
+    }
+
+    public List<UnitInPool> getAllMyFinishedBases() {
+        List<UnitInPool> bases = getFinishedUnits(TERRAN_COMMAND_CENTER);
+        bases.addAll(getFinishedUnits(TERRAN_ORBITAL_COMMAND));
+        bases.addAll(getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
+        return bases;
+    }
+
+    public boolean unitIsABase(UnitType unit) {
+        return unitIsABase((Units) unit);
+    }
+
+    public boolean unitIsABase(Units unit) {
+        return unit.equals(TERRAN_COMMAND_CENTER) ||
+                unit.equals(TERRAN_PLANETARY_FORTRESS) ||
+                unit.equals(TERRAN_ORBITAL_COMMAND);
     }
 }

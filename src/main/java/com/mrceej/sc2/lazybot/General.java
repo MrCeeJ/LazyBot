@@ -49,6 +49,8 @@ class General {
         fab.updateBuild(unitType);
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
+            case TERRAN_PLANETARY_FORTRESS:
+            case TERRAN_ORBITAL_COMMAND:
                 if (firstCommandCenter) {
                     mapUtils.setStartingBase(unitInPool);
                     this.firstCommandCenter = false;
@@ -79,6 +81,8 @@ class General {
         Units unitType = (Units) unit.unit().getType();
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
+            case TERRAN_PLANETARY_FORTRESS:
+            case TERRAN_ORBITAL_COMMAND:
                 addToControlGroup(5, unitType);
                 rebalanceWorkers();
                 break;
@@ -133,6 +137,8 @@ class General {
                 handleIdleSCV(unitInPool);
                 break;
             case TERRAN_COMMAND_CENTER:
+            case TERRAN_PLANETARY_FORTRESS:
+            case TERRAN_ORBITAL_COMMAND:
                 rebalanceWorkers();
                 break;
             case TERRAN_SUPPLY_DEPOT:
@@ -145,14 +151,9 @@ class General {
                 break;
         }
     }
-    // TODO: add the below to other uses of TERRAN_COMMAND_CENTER
-    // bases.addAll(utils.getFinishedUnits(TERRAN_ORBITAL_COMMAND));
-    //        bases.addAll(utils.getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
 
     private void allocateWorkersToGas(UnitInPool refinery, int number) {
-        List<UnitInPool> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
-        bases.addAll(utils.getFinishedUnits(TERRAN_ORBITAL_COMMAND));
-        bases.addAll(utils.getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
+        List<UnitInPool> bases = utils.getAllMyFinishedBases();
         bases.sort(mapUtils.getLinearDistanceComparatorForUnit(refinery.unit().getPosition().toPoint2d()));
         int found = 0;
         for (UnitInPool base : bases) {
@@ -168,13 +169,13 @@ class General {
             }
         }
     }
-     public void deallocateWorker(UnitInPool scv) {
+
+    public void deallocateWorker(UnitInPool scv) {
         workerToBaseMap.remove(scv);
-     }
+    }
+
     private void rebalanceWorkers() {
-        List<UnitInPool> bases = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
-        bases.addAll(utils.getFinishedUnits(TERRAN_ORBITAL_COMMAND));
-        bases.addAll(utils.getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
+        List<UnitInPool> bases = utils.getAllMyFinishedBases();
 
         int workers = agent.observation().getFoodWorkers();
         int average = workers / bases.size();
@@ -221,10 +222,7 @@ class General {
             UnitInPool scv = workers.get(i);
             log.info("Reassigning worker :" + scv.getTag().toString() + " from " + from.getTag().toString() + " to " + to.getTag().toString());
             workerToBaseMap.put(scv, to);
-            if (to.unit().getType().equals(TERRAN_COMMAND_CENTER) ||
-                    to.unit().getType().equals(TERRAN_PLANETARY_FORTRESS) ||
-                            to.unit().getType().equals(TERRAN_ORBITAL_COMMAND )) {
-
+            if (utils.unitIsABase(to.unit().getType())) {
                 rebaseSCVToCommandCenter(location, scv);
             } else {
                 rebaseSCVToRefinery(to, scv);
@@ -236,7 +234,7 @@ class General {
         if (workerToBaseMap.containsKey(unitInPool)) {
             log.info("Found idle scv, sending him back to work at ");
             UnitInPool destination = workerToBaseMap.get(unitInPool);
-            if (destination.unit().getType().equals(TERRAN_COMMAND_CENTER)) {
+            if (utils.unitIsABase(destination.unit().getType())) {
                 log.info("Found idle scv: " + unitInPool.unit().getTag() + ", sending him back to work at cc");
                 rebaseSCVToCommandCenter(destination.unit().getPosition().toPoint2d(), unitInPool);
             } else {
@@ -276,7 +274,7 @@ class General {
             log.info("Detected old worker re-creation");
             log.info("Worker :" + unitInPool.unit().getTag() + " was assigned to " + target.unit().getType() + " number " + target.getTag());
         } else {
-            List<UnitInPool> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
+            List<UnitInPool> commandCenters = utils.getAllMyFinishedBases();
             UnitInPool destination = commandCenters.stream()
                     .filter(c -> c.unit().getAssignedHarvesters().isPresent())
                     .min(Comparator.comparing(c -> c.unit().getAssignedHarvesters().get()))

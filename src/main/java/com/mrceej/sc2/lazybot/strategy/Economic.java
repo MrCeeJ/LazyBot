@@ -36,7 +36,7 @@ public class Economic extends Doctrine {
                     //log.info(" .. Saving up for a command center");
                     return Units.INVALID;
                 }
-            } else if ((utils.countOfUnitsBuildingUnit(TERRAN_SCV) < utils.countFinishedUnitType(TERRAN_COMMAND_CENTER)) && workers < 90) {
+            } else if ((utils.countOfUnitsBuildingUnit(TERRAN_SCV) < utils.getAllMyFinishedBases().size()) && workers < 90) {
                 if (minerals >= 50) {
                     return TERRAN_SCV;
                 } else {
@@ -60,7 +60,7 @@ public class Economic extends Doctrine {
     public void debugStatus() {
         log.info("Economy : " + urgency);
         log.info("Workers in production :" + utils.countOfUnitsBuildingUnit(TERRAN_SCV));
-        log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
+        log.info("Max Workers in production :" + utils.getAllMyFinishedBases().size());
     }
 
 }

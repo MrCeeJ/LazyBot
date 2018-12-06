@@ -88,7 +88,7 @@ public class Squad {
     }
 
     private void givePatrolBasesOrder(UnitInPool unit) {
-        utils.getFinishedUnits(Units.TERRAN_COMMAND_CENTER)
+        utils.getAllMyFinishedBases()
                 .forEach(base -> agent.actions().unitCommand(unit.unit(), Abilities.PATROL, base.unit(), true));
     }
 
