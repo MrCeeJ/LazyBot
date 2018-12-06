@@ -74,15 +74,19 @@ class BuildUtils {
     }
 
     private boolean tryToBuildOrbital() {
-        if (agent.observation().getMinerals() > 150) {
-            log.info("Attempting to build an Orbital Command Center");
-            List<UnitInPool> commandCenters = utils.getFinishedUnits(TERRAN_COMMAND_CENTER);
-            if (commandCenters.size() > 0) {
-                agent.actions().unitCommand(commandCenters.get(0).unit(), Abilities.MORPH_ORBITAL_COMMAND, false);
-                return true;
+        if (canBuildBuilding(TERRAN_ORBITAL_COMMAND)) {
+            log.info("Attempting to build an Orbital");
+            List<UnitInPool> commandCenters = utils.getUnitsThatCanBuild(TERRAN_ORBITAL_COMMAND);
+            for (UnitInPool cc : commandCenters) {
+                if (cc.getUnit().isPresent()) {
+                    agent.actions().unitCommand(cc.unit(), Abilities.MORPH_ORBITAL_COMMAND, false);
+                    return true;
+                }
             }
+            log.info("Unable to find a CC to build a Orbital from");
+            return false;
         }
-        log.info("Not enough minerals to build a Orbital Command Center");
+        log.info("Not enough minerals or tech to build a Orbital Command Center");
         return false;
     }
 
@@ -113,7 +117,7 @@ class BuildUtils {
     }
 
     private boolean tryToExpand() {
-        if (agent.observation().getMinerals() > 400) {
+        if (canBuildBuilding(TERRAN_COMMAND_CENTER)) {
             log.info("Attempting to build a Command Center");
             if (utils.countOfUnitsBuildingUnit(TERRAN_COMMAND_CENTER) == 0) {
                 UnitInPool unit = mapUtils.getRandomUnit(TERRAN_SCV);
@@ -123,7 +127,7 @@ class BuildUtils {
             }
             return true;
         }
-        log.info("Not enough minerals to build a Command Center");
+        log.info("Not enough minerals or tech to build a Command Center");
         return false;
     }
 
