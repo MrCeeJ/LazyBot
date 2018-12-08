@@ -1,4 +1,4 @@
-package com.mrceej.sc2.lazybot;
+package com.mrceej.sc2.lazybot.utils;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
@@ -30,11 +30,11 @@ public class MapUtils {
     private Utils utils;
     // private List<Point> base_locations;
 
-    MapUtils(S2Agent agent) {
+    public MapUtils(S2Agent agent) {
         this.agent = agent;
     }
 
-    void init(Utils utils) {
+    public void init(Utils utils) {
         this.utils = utils;
         //  base_locations = agent.query().calculateExpansionLocations(agent.observation());
         STARTING_BASE_LOCATION = agent.observation().getStartLocation();
@@ -75,13 +75,12 @@ public class MapUtils {
                 .min(getLinearDistanceComparatorForUnit(source.unit().getPosition().toPoint2d()));
     }
 
-    boolean positionNotIn(UnitInPool unit, List<UnitInPool> units) {
+    private boolean positionNotIn(UnitInPool unit, List<UnitInPool> units) {
         return units.stream()
-                .map(u -> u.unit().getPosition())
-                .noneMatch(x -> x.equals(unit.unit().getPosition()));
+                .noneMatch(u -> u.unit().getPosition().equals(unit.unit().getPosition()));
     }
 
-    Comparator<UnitInPool> getLinearDistanceComparatorForUnit(Point2d location) {
+    public Comparator<UnitInPool> getLinearDistanceComparatorForUnit(Point2d location) {
         return (u1, u2) -> {
             Double d1 = u1.unit().getPosition().toPoint2d().distance(location);
             Double d2 = u2.unit().getPosition().toPoint2d().distance(location);
@@ -114,13 +113,13 @@ public class MapUtils {
         };
     }
 
-    Optional<Unit> findNearestMineralPatch(Point2d start) {
+    public Optional<Unit> findNearestMineralPatch(Point2d start) {
         List<UnitInPool> units = agent.observation().getUnits(Alliance.NEUTRAL, UnitInPool.isUnit(NEUTRAL_MINERAL_FIELD));
         double distance = Double.MAX_VALUE;
         Unit target = null;
         for (UnitInPool unitInPool : units) {
             Unit unit = unitInPool.unit();
-                double d = unit.getPosition().toPoint2d().distance(start); //TODO: Use real pathing plx
+                double d = unit.getPosition().toPoint2d().distance(start);
                 if (d < distance) {
                     distance = d;
                     target = unit;
@@ -149,6 +148,7 @@ public class MapUtils {
 
     Optional<UnitInPool> getNearestFreeWorker(Point2d location) {
         return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_SCV)).stream()
+                .filter(unit -> unit.unit().getOrders().size() > 0)
                 .filter(unit -> unit.unit().getOrders().get(0).getAbility().equals(Abilities.HARVEST_GATHER))
                 .min(getLinearDistanceComparatorForUnit(location));
     }

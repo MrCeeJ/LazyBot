@@ -1,14 +1,12 @@
 package com.mrceej.sc2.lazybot.Combat;
 
-import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.UnitType;
-import com.github.ocraft.s2client.protocol.data.UnitTypeData;
 import com.github.ocraft.s2client.protocol.unit.Unit;
 import lombok.Getter;
 import lombok.Setter;
 
 
-public class SquadMember {
+class SquadMember {
 
     @Getter @Setter
     private Unit unit;

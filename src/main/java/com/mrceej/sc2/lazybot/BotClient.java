@@ -6,8 +6,9 @@ import com.github.ocraft.s2client.bot.setting.PlayerSettings;
 import com.github.ocraft.s2client.protocol.game.BattlenetMap;
 import com.github.ocraft.s2client.protocol.game.Difficulty;
 import com.github.ocraft.s2client.protocol.game.Race;
+import com.mrceej.sc2.lazybot.lazyBot.LazyBot;
 
-public class BotClient {
+class BotClient {
 
     public static void main(String[] args) {
 
@@ -18,8 +19,6 @@ public class BotClient {
                 .loadSettings(args)
                 .setParticipants(S2Coordinator.createParticipant(race, bot),
                         opponent)
-//                        S2Coordinator.createComputer(Race.ZERG, Difficulty.MEDIUM_HARD))
-//                      S2Coordinator.createComputer(Race.TERRAN, Difficulty.MEDIUM_HARD))
                 .launchStarcraft()
                 .startGame(BattlenetMap.of("Cloud Kingdom LE"));
 
@@ -40,6 +39,8 @@ public class BotClient {
     }
 
     private static PlayerSettings getComputerOpponent() {
+        //                        S2Coordinator.createComputer(Race.ZERG, Difficulty.MEDIUM_HARD))
+//                      S2Coordinator.createComputer(Race.TERRAN, Difficulty.MEDIUM_HARD))
         return S2Coordinator.createComputer(Race.PROTOSS, Difficulty.HARDER);
     }
 }

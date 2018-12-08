@@ -3,10 +3,11 @@ package com.mrceej.sc2.lazybot.strategy;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.mrceej.sc2.lazybot.BuildUtils;
-import com.mrceej.sc2.lazybot.Utils;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
+import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class Doctrine implements Comparable<Doctrine> {
 
@@ -28,19 +29,18 @@ public abstract class Doctrine implements Comparable<Doctrine> {
     }
 
     boolean canBuildAdditionalUnit(Units unit, int minerals, int gas) {
-        if (utils.getMineralCost(unit) > minerals || utils.getGasCost(unit) > gas)
+        if (utils.getMineralCost(unit) > minerals || utils.getGasCost(unit) > gas) {
             return false;
-
+        }
         return utils.getUnitsThatCanBuild(unit).stream()
-                .filter(u -> u.unit().getBuildProgress() == 1f)
                 .anyMatch(u -> u.unit().getOrders().size() == 0);
     }
 
-    public int compareTo(Doctrine d) {
+    public int compareTo(@NotNull Doctrine d) {
         return Double.compare(this.getUrgency(), d.getUrgency());
     }
 
-    double getUrgency() {
+    private double getUrgency() {
         this.urgency = calculateUrgency();
         return urgency;
     }

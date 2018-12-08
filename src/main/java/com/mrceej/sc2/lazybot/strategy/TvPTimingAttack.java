@@ -2,8 +2,8 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.mrceej.sc2.lazybot.BuildUtils;
-import com.mrceej.sc2.lazybot.Utils;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
+import com.mrceej.sc2.lazybot.utils.Utils;
 
 import java.util.List;
 
@@ -20,9 +20,7 @@ public class TvPTimingAttack extends Doctrine {
         return 0;
     }
 
-    private int buildOrderPosition = 0;
-
-    private List<Units> buildOrder = List.of(
+    private final List<Units> buildOrder = List.of(
             Units.TERRAN_BARRACKS,
             Units.TERRAN_REFINERY,
             Units.TERRAN_REAPER,
@@ -41,7 +39,7 @@ public class TvPTimingAttack extends Doctrine {
             Units.TERRAN_FACTORY,
             Units.TERRAN_STARPORT_REACTOR,
             Units.TERRAN_MEDIVAC,
-            Units.TERRAN_MEDIVAC,       //Load Marines and move out when Units.TERRAN_MEDIVACs pop out
+            Units.TERRAN_MEDIVAC,       //Load Marines and move out when Units.TERRAN_MEDIVAC s pop out
             Units.TERRAN_ENGINEERING_BAY,
             Units.TERRAN_ENGINEERING_BAY,
             // Combat Shield
@@ -81,6 +79,7 @@ public class TvPTimingAttack extends Doctrine {
 
     @Override
     public Units getConstructionOrder(int minerals, int gas) {
+        int buildOrderPosition = 0;
         return buildOrder.get(buildOrderPosition);
     }
 

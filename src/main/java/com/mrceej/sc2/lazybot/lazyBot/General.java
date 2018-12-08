@@ -1,4 +1,4 @@
-package com.mrceej.sc2.lazybot;
+package com.mrceej.sc2.lazybot.lazyBot;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
@@ -9,6 +9,9 @@ import com.github.ocraft.s2client.protocol.observation.ui.ObservationUi;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Unit;
 import com.mrceej.sc2.lazybot.Combat.Squad;
+import com.mrceej.sc2.lazybot.utils.MapUtils;
+import com.mrceej.sc2.lazybot.state.State;
+import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -16,18 +19,20 @@ import java.util.*;
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Slf4j
+public
 class General {
-    private S2Agent agent;
+    private final S2Agent agent;
     private Utils utils;
     private MapUtils mapUtils;
 
-    private ArrayList<Squad> squads;
-    private Map<UnitInPool, UnitInPool> workerToBaseMap;
+    private final ArrayList<Squad> squads;
+    private final Map<UnitInPool, UnitInPool> workerToBaseMap;
 
     private Squad currentSquad;
 
     private boolean firstCommandCenter = true;
     private Fabrication fab;
+    private List<State> unitStates;
 
     General(S2Agent agent) {
         this.agent = agent;
@@ -35,7 +40,8 @@ class General {
         this.workerToBaseMap = new HashMap<>();
     }
 
-    void init(Utils utils, MapUtils mapUtils, Fabrication fab) {
+    void init(List<State> unitStates, Utils utils, MapUtils mapUtils, Fabrication fab) {
+        this.unitStates = unitStates;
         this.utils = utils;
         this.mapUtils = mapUtils;
         this.currentSquad = new Squad(agent, utils, mapUtils);
@@ -87,7 +93,7 @@ class General {
                 rebalanceWorkers();
                 break;
             case TERRAN_REFINERY:
-                allocateWorkersToGas(unit, 2);
+                allocateWorkersToGas(unit, 3);
                 rebalanceWorkers();
                 break;
             default:
@@ -96,12 +102,11 @@ class General {
     }
 
     private void addToControlGroup(int group, Units unit) {
-        // TODO
+
 //        Ui.ActionControlGroup gca = SC2APIProtocol.Ui.ActionControlGroup.newBuilder().setControlGroupIndex(group).setAction(Ui.ActionControlGroup.ControlGroupAction.Append && gca.).build();
 //        Spatial.FeatureLayers.getDefaultInstance().
 //            Set<Ui.ControlGroup> groups = agent.observation().getRawObservation().getUi().get().getControlGroups();
-//        Ui.ActionControlGroup.ControlGroupAction cgpa = Ui.ActionControlGroup.ControlGroupAction.forNumber(group);
-        // cgpa.
+//        Ui.ActionControlGroup.ControlGroupAction group = Ui.ActionControlGroup.ControlGroupAction.forNumber(group);
         log.info("Control groups :");
         Optional<ObservationUi> obs = agent.observation().getRawObservation().getUi();
         if (obs.isPresent()) {
@@ -176,7 +181,9 @@ class General {
 
     private void rebalanceWorkers() {
         List<UnitInPool> bases = utils.getAllMyFinishedBases();
-
+        if (bases.size() < 2){
+            return;
+        }
         int workers = agent.observation().getFoodWorkers();
         int average = workers / bases.size();
         List<UnitInPool> basesOver = new ArrayList<>();
@@ -269,11 +276,7 @@ class General {
     }
 
     private void onSCVCreated(UnitInPool unitInPool) {
-        if (workerToBaseMap.containsKey(unitInPool)) {
-            UnitInPool target = workerToBaseMap.get(unitInPool);
-            log.info("Detected old worker re-creation");
-            log.info("Worker :" + unitInPool.unit().getTag() + " was assigned to " + target.unit().getType() + " number " + target.getTag());
-        } else {
+        if (!workerToBaseMap.containsKey(unitInPool)) {
             List<UnitInPool> commandCenters = utils.getAllMyFinishedBases();
             UnitInPool destination = commandCenters.stream()
                     .filter(c -> c.unit().getAssignedHarvesters().isPresent())
@@ -288,6 +291,11 @@ class General {
             mapUtils.findNearestMineralPatch(location).ifPresent(mineralPath ->
                     agent.actions().unitCommand(unitInPool.unit(), Abilities.SMART, mineralPath, false));
         }
+//        else {
+//            UnitInPool target = workerToBaseMap.get(unitInPool);
+//            log.info("Detected old worker re-creation");
+//            log.info("Worker :" + unitInPool.unit().getTag() + " was assigned to " + target.unit().getType() + " number " + target.getTag());
+//        }
     }
 }
 

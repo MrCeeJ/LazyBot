@@ -1,4 +1,4 @@
-package com.mrceej.sc2.lazybot;
+package com.mrceej.sc2.lazybot.utils;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
@@ -6,6 +6,7 @@ import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Ability;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
+import com.mrceej.sc2.lazybot.lazyBot.General;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
@@ -21,20 +22,23 @@ class BuildUtils {
     private final S2Agent agent;
     private Utils utils;
     private MapUtils mapUtils;
-    private Map<Units, List<Units>> techRequirements = TechUtils.getTechRequirements();
+    private final Map<Units, List<Units>> techRequirements = TechUtils.getTechRequirements();
+    private General general;
 
 
-    BuildUtils(S2Agent agent) {
+    public BuildUtils(S2Agent agent) {
         this.agent = agent;
     }
 
-    void init(Utils utils, MapUtils mapUtils) {
+    public void init(Utils utils, MapUtils mapUtils, General general) {
         this.utils = utils;
         this.mapUtils = mapUtils;
+        this.general = general;
     }
 
 
-    boolean buildUnit(Units unit) {
+    public boolean buildUnit(Units unit) {
+
         switch (unit) {
             case TERRAN_SCV:
             case TERRAN_MARINE:
@@ -62,21 +66,23 @@ class BuildUtils {
                     .findFirst();
             if (builder.isPresent()) {
                 agent.actions().unitCommand(builder.get().unit(), ability, false);
-                log.info("Started construction of " + unitType);
+                log.info("Started construction of " + unitType + " by " + builder.get().unit().getType() + ", tag : " + builder.get().getTag());
                 return true;
             } else {
                 log.info("No units able to build a " + unitType + " from " + builders.size() + " builders.");
                 return false;
             }
+        } else {
+            log.info("Not enough resources to build a " + unitType);
+            return false;
         }
-        log.info("Not enough resources to build a " + unitType);
-        return false;
     }
 
     private boolean tryToBuildOrbital() {
         if (canBuildBuilding(TERRAN_ORBITAL_COMMAND)) {
-            log.info("Attempting to build an Orbital");
+            log.info("Attempting to morph to an Orbital");
             List<UnitInPool> commandCenters = utils.getUnitsThatCanBuild(TERRAN_ORBITAL_COMMAND);
+
             for (UnitInPool cc : commandCenters) {
                 if (cc.getUnit().isPresent()) {
                     agent.actions().unitCommand(cc.unit(), Abilities.MORPH_ORBITAL_COMMAND, false);
@@ -110,6 +116,7 @@ class BuildUtils {
         for (UnitInPool u : units) {
             if (u.unit().getAddOnTag().isEmpty()) {
                 agent.actions().unitCommand(u.unit(), ability, false);
+                general.deallocateWorker(u);
                 return true;
             }
         }
@@ -120,12 +127,16 @@ class BuildUtils {
         if (canBuildBuilding(TERRAN_COMMAND_CENTER)) {
             log.info("Attempting to build a Command Center");
             if (utils.countOfUnitsBuildingUnit(TERRAN_COMMAND_CENTER) == 0) {
-                UnitInPool unit = mapUtils.getRandomUnit(TERRAN_SCV);
+                Point2d location = mapUtils.getNearestExpansionLocationTo(mapUtils.getStartingBaseLocation().toPoint2d());
+                Optional<UnitInPool> unit = mapUtils.getNearestFreeWorker(location);
+                if (unit.isPresent()) {
+                    agent.actions().unitCommand(unit.get().unit(), Abilities.BUILD_COMMAND_CENTER,
+                            location, false);
+                    general.deallocateWorker(unit.get());
+                    return true;
+                }
 
-                agent.actions().unitCommand(unit.unit(), Abilities.BUILD_COMMAND_CENTER,
-                        mapUtils.getNearestExpansionLocationTo(mapUtils.getStartingBaseLocation().toPoint2d()), false);
             }
-            return true;
         }
         log.info("Not enough minerals or tech to build a Command Center");
         return false;
@@ -141,6 +152,7 @@ class BuildUtils {
                 if (unit.isPresent() && agent.query().placement(ability, location)) {
                     log.info("Identified location to :" + ability + " with worker " + unit.get().getTag() + " at " + location);
                     agent.actions().unitCommand(unit.get().unit(), ability, location, false);
+                    general.deallocateWorker(unit.get());
                     return true;
                 }
             }
@@ -150,12 +162,13 @@ class BuildUtils {
     }
 
     private boolean tryToBuildRefineryOnUnit(UnitInPool location) {
-        UnitInPool unit = mapUtils.getRandomUnit(TERRAN_SCV);
-        agent.actions().unitCommand(unit.unit(), utils.getAbilityToBuildUnit(TERRAN_REFINERY), location.unit(), false);
-        if (unit.unit().getOrders().size() == 0) {
-            log.info("WARNING unit has no orders");
+        Optional<UnitInPool> unit = mapUtils.getNearestFreeWorker(location.unit().getPosition().toPoint2d());
+        if (unit.isPresent()) {
+            agent.actions().unitCommand(unit.get().unit(), utils.getAbilityToBuildUnit(TERRAN_REFINERY), location.unit(), false);
+            general.deallocateWorker(unit.get());
+            return true;
         }
-        return true;
+        return false;
     }
 
     private boolean tryToBuildRefinery() {
@@ -163,6 +176,9 @@ class BuildUtils {
             Optional<UnitInPool> geyser = mapUtils.findNearestVespene(mapUtils.getStartingBase());
             if (geyser.isPresent()) {
                 return tryToBuildRefineryOnUnit(geyser.get());
+            } else {
+                log.info("Not enough minerals to build a Refinery");
+                return false;
             }
         }
         log.info("Not enough minerals to build a Refinery");
@@ -185,4 +201,9 @@ class BuildUtils {
         return true;
     }
 
+    public boolean needSupply(int supplyBuffer) {
+        int available = agent.observation().getFoodCap() + utils.getSupplyInProgress();
+        int need = supplyBuffer + agent.observation().getFoodUsed() + utils.getMaxSupplyProduction();
+        return agent.observation().getFoodCap() < 200 && need > available;
+    }
 }

@@ -1,6 +1,8 @@
-package com.mrceej.sc2.lazybot;
+package com.mrceej.sc2.lazybot.lazyBot;
 
 import com.github.ocraft.s2client.bot.S2Agent;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
+import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.log4j.Log4j2;
 import com.mrceej.sc2.lazybot.strategy.*;
 
@@ -9,13 +11,14 @@ import java.util.Collections;
 import java.util.List;
 
 @Log4j2
+public
 class Strategy {
 
     private enum Mode {basic, simple, rush, basicBuildOrder}
 
-    private S2Agent agent;
-    private List<Doctrine> doctrines;
-    private Mode mode;
+    private final S2Agent agent;
+    private final List<Doctrine> doctrines;
+    private final Mode mode;
 
     Strategy(S2Agent agent) {
         this.agent = agent;

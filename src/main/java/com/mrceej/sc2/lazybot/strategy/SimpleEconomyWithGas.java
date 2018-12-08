@@ -2,8 +2,8 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.mrceej.sc2.lazybot.BuildUtils;
-import com.mrceej.sc2.lazybot.Utils;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
+import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.log4j.Log4j2;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
@@ -80,6 +80,6 @@ public class SimpleEconomyWithGas extends Doctrine {
         log.info("Economy : " + urgency);
         log.info("Workers in production :" + utils.countOfUnitsBuildingUnit(TERRAN_SCV));
         log.info("Max Workers in production :" + utils.countFinishedUnitType(TERRAN_COMMAND_CENTER));
-        log.info("Currenty want a :" + getConstructionDesire());
+        log.info("Currently want a :" + getConstructionDesire());
     }
 }

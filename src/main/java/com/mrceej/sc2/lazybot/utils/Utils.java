@@ -1,4 +1,4 @@
-package com.mrceej.sc2.lazybot;
+package com.mrceej.sc2.lazybot.utils;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
@@ -21,8 +21,8 @@ import static java.util.Map.entry;
 public class Utils {
 
     private final S2Agent agent;
-    float mineralRate;
-    float vespeneRate;
+    public float mineralRate;
+    public float vespeneRate;
 
     public static final double MARINE_COST_PER_MIN = 166.6666666666667;
     public static final double WORKER_COST_PER_MIN = 250;
@@ -51,7 +51,7 @@ public class Utils {
             entry(TERRAN_MEDIVAC, Abilities.TRAIN_MEDIVAC)
     );
 
-    Utils(S2Agent agent) {
+    public Utils(S2Agent agent) {
         this.agent = agent;
     }
 
@@ -59,12 +59,18 @@ public class Utils {
         return UnitTypeToAbilityMap.get(unitType);
     }
 
-    void updateIncomes() {
+    public void updateIncomes() {
         mineralRate = agent.observation().getScore().getDetails().getCollectionRateMinerals();
         vespeneRate = agent.observation().getScore().getDetails().getCollectionRateVespene();
     }
 
     public List<UnitInPool> getUnitsThatCanBuild(Units unitType) {
+        return getUnitsThatCouldBuild(unitType).stream()
+                .filter(u -> u.unit().getBuildProgress() == 1f)
+                .collect(Collectors.toList());
+    }
+
+    private List<UnitInPool> getUnitsThatCouldBuild(Units unitType) {
         Ability ability = UnitTypeToAbilityMap.get(unitType);
         return agent.observation().getUnits(Alliance.SELF, unitInPool -> unitInPool.unit().getType().getAbilities().contains(ability));
     }
@@ -89,11 +95,11 @@ public class Utils {
         return getUnitsBuildingUnit(unitType).size();
     }
 
-    public List<UnitInPool> getUnitsBuildingUnit(Units unitType) {
+    private List<UnitInPool> getUnitsBuildingUnit(Units unitType) {
         return agent.observation().getUnits(Alliance.SELF, isBuildingUnit(unitType));
     }
 
-    public Predicate<UnitInPool> isBuildingUnit(Units unitType) {
+    private Predicate<UnitInPool> isBuildingUnit(Units unitType) {
         Ability ability = getAbilityToBuildUnit(unitType);
         return unitInPool -> unitInPool.unit().getOrders().stream()
                 .map(UnitOrder::getAbility)
@@ -104,11 +110,11 @@ public class Utils {
         return getUnitsBeingBuilt(unitType).size();
     }
 
-    public List<UnitInPool> getUnitsBeingBuilt(Units unitType) {
+    private List<UnitInPool> getUnitsBeingBuilt(Units unitType) {
         return agent.observation().getUnits(Alliance.SELF, isBeingBuilt(unitType));
     }
 
-    public Predicate<UnitInPool> isBeingBuilt(Units unitType) {
+    private Predicate<UnitInPool> isBeingBuilt(Units unitType) {
         return unitInPool -> unitInPool.unit().getType().equals(unitType)
                 && unitInPool.unit().getBuildProgress() < 1f;
     }
@@ -128,11 +134,11 @@ public class Utils {
     }
 
     public int getMineralCost(Units unit) {
-        return agent.observation().getUnitTypeData(false).get(unit).getMineralCost().get();
+        return agent.observation().getUnitTypeData(false).get(unit).getMineralCost().orElse(0);
     }
 
     public int getGasCost(Units unit) {
-        return agent.observation().getUnitTypeData(false).get(unit).getVespeneCost().get();
+        return agent.observation().getUnitTypeData(false).get(unit).getVespeneCost().orElse(0);
     }
 
     public int getMineralCost(UnitInPool unit) {
@@ -155,7 +161,7 @@ public class Utils {
         return unitIsABase((Units) unit);
     }
 
-    public boolean unitIsABase(Units unit) {
+    private boolean unitIsABase(Units unit) {
         return unit.equals(TERRAN_COMMAND_CENTER) ||
                 unit.equals(TERRAN_PLANETARY_FORTRESS) ||
                 unit.equals(TERRAN_ORBITAL_COMMAND);

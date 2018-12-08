@@ -1,4 +1,4 @@
-package com.mrceej.sc2.lazybot;
+package com.mrceej.sc2.lazybot.utils;
 
 import com.github.ocraft.s2client.protocol.data.Units;
 
@@ -12,8 +12,8 @@ class TechUtils {
 
     private static final Map<Units, List<Units>> techRequirements = Map.ofEntries(
             entry(TERRAN_COMMAND_CENTER, List.of()),
-            entry(TERRAN_ORBITAL_COMMAND, List.of(TERRAN_BARRACKS)),
-            entry(TERRAN_PLANETARY_FORTRESS, List.of(TERRAN_ENGINEERING_BAY)),
+            entry(TERRAN_ORBITAL_COMMAND, List.of(TERRAN_BARRACKS, TERRAN_COMMAND_CENTER)),
+            entry(TERRAN_PLANETARY_FORTRESS, List.of(TERRAN_ENGINEERING_BAY, TERRAN_COMMAND_CENTER)),
             entry(TERRAN_SUPPLY_DEPOT, List.of()),
             entry(TERRAN_REFINERY, List.of()),
             entry(TERRAN_BARRACKS, List.of(TERRAN_SUPPLY_DEPOT)),

@@ -3,9 +3,8 @@ package com.mrceej.sc2.lazybot.Combat;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
-import com.github.ocraft.s2client.protocol.data.Units;
-import com.mrceej.sc2.lazybot.MapUtils;
-import com.mrceej.sc2.lazybot.Utils;
+import com.mrceej.sc2.lazybot.utils.MapUtils;
+import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -22,7 +21,7 @@ public class Squad {
     @Getter
     private Orders orders;
     @Getter
-    private List<UnitInPool> units;
+    private final List<UnitInPool> units;
 
     public Squad(S2Agent agent, Utils utils, MapUtils mapUtils) {
         this.agent = agent;

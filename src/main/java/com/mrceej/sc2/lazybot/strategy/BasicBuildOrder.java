@@ -2,8 +2,8 @@ package com.mrceej.sc2.lazybot.strategy;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
-import com.mrceej.sc2.lazybot.BuildUtils;
-import com.mrceej.sc2.lazybot.Utils;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
+import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
@@ -16,30 +16,77 @@ import static java.util.Map.entry;
 public class BasicBuildOrder extends Doctrine {
 
     private int currentOrderCount = 1;
+    private static final int SUPPLY_BUFFER = 2;
+
 
     public BasicBuildOrder(S2Agent agent, Utils utils, BuildUtils buildUtils) {
         super(agent, utils, buildUtils);
     }
 
-    private List<Units> unitPriority = List.of(TERRAN_SCV, TERRAN_MARINE, TERRAN_HELLION, TERRAN_BANSHEE);
+    private final List<Units> unitPriority = List.of(TERRAN_SCV, TERRAN_MARINE, TERRAN_HELLION, TERRAN_BANSHEE);
 
-    private Map<Integer, Units> buildOrderMap = Map.ofEntries(
-            entry(1, TERRAN_SUPPLY_DEPOT),
-            entry(2, TERRAN_BARRACKS),
-            entry(3, TERRAN_REFINERY),
-            entry(4, TERRAN_ORBITAL_COMMAND),
-            entry(5, TERRAN_SUPPLY_DEPOT),
-            entry(6, TERRAN_COMMAND_CENTER),
-            entry(7, TERRAN_FACTORY),
-            entry(8, TERRAN_FACTORY_REACTOR),
-            entry(9, TERRAN_COMMAND_CENTER),
-            entry(10, TERRAN_ORBITAL_COMMAND),
-            entry(11, TERRAN_REFINERY),
-            entry(12, TERRAN_STARPORT),
-            entry(13, TERRAN_STARPORT_TECHLAB),
-            entry(14, TERRAN_ORBITAL_COMMAND),
-            entry(15, TERRAN_BARRACKS)
+    private final Map<Integer, Units> buildOrderMap = Map.ofEntries(
+            entry(1, TERRAN_BARRACKS),
+            entry(2, TERRAN_REFINERY),
+            entry(3, TERRAN_ORBITAL_COMMAND),
+            entry(4, TERRAN_COMMAND_CENTER),
+            entry(5, TERRAN_FACTORY),
+            entry(6, TERRAN_FACTORY_REACTOR),
+            entry(7, TERRAN_COMMAND_CENTER),
+            entry(8, TERRAN_ORBITAL_COMMAND),
+            entry(9, TERRAN_REFINERY),
+            entry(10, TERRAN_STARPORT),
+            entry(11, TERRAN_STARPORT_TECHLAB),
+            entry(12, TERRAN_ORBITAL_COMMAND),
+            entry(13, TERRAN_BARRACKS)
     );
+
+    @Override
+    double calculateUrgency() {
+        return 1d;
+    }
+
+    @Override
+    public Units getConstructionOrder(int minerals, int gas) {
+
+        if (buildUtils.needSupply(SUPPLY_BUFFER)) {
+          //  log.info("BBO wants to build :" + TERRAN_SUPPLY_DEPOT);
+            setConstructionDesire(TERRAN_SUPPLY_DEPOT);
+            return buildUtils.canBuildBuilding(TERRAN_SUPPLY_DEPOT) ? TERRAN_SUPPLY_DEPOT : INVALID;
+        }
+
+        for (Units u : unitPriority) {
+            if (canBuildAdditionalUnit(u, minerals, gas)) {
+            //    log.info("BBO wants to build :" + u);
+                setConstructionDesire(u);
+                return u;
+            }
+        }
+
+        if (buildOrderMap.size() >= currentOrderCount) {
+            Units building = buildOrderMap.get(currentOrderCount);
+            if (buildUtils.canBuildBuilding(building)) {
+                currentOrderCount++;
+           //     log.info("BBO wants to build :" + building);
+                setConstructionDesire(building);
+                return building;
+            }
+        }
+        return INVALID;
+    }
+
+    @Override
+    public String getName() {
+        return "Basic Build Order";
+    }
+
+    @Override
+    public void debugStatus() {
+        log.info("Build Order Location : " + currentOrderCount);
+        log.info("last order : " + getConstructionDesire());
+    }
+}
+
 
     /*
      14	  0:17	  Supply Depot
@@ -100,43 +147,3 @@ public class BasicBuildOrder extends Doctrine {
       157	  8:35	  Barracks
 
      */
-    @Override
-    double calculateUrgency() {
-        return 1d;
-    }
-
-    @Override
-    public Units getConstructionOrder(int minerals, int gas) {
-
-        for (Units u : unitPriority) {
-            if (canBuildAdditionalUnit(u, minerals, gas)) {
-                log.info("BBO wants to build :" + u);
-                setConstructionDesire(u);
-                return u;
-            }
-        }
-
-        if (buildOrderMap.size() >= currentOrderCount) {
-            Units building = buildOrderMap.get(currentOrderCount);
-            if (buildUtils.canBuildBuilding(building)) {
-
-                currentOrderCount++;
-                log.info("BBO wants to build :" + building);
-                setConstructionDesire(building);
-                return building;
-            }
-        }
-        return INVALID;
-    }
-
-    @Override
-    public String getName() {
-        return "Basic Build Order";
-    }
-
-    @Override
-    public void debugStatus() {
-        log.info("Build Order Location : " + currentOrderCount);
-        log.info("last order : " + getConstructionDesire());
-    }
-}

@@ -3,4 +3,3 @@
 src/test/
 log/
 target/
-${logPath}/
