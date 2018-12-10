@@ -1,22 +1,8 @@
-Remove DynamicBuildOrder, BasicBuildOrder and Fabrication
-
-Convert run method to call Strategy.getDoctrine
-Add doctrine calls to the supply units and buildings methods
-
-Remove everything from Strategy
-Make a new Doctrine supporting
-  checkSupply();
-  checkMakeUnits();
-  checkMakeBuildings();
-  
-Make Strategy return a doctrine
-
 Implement TvP, TvZ, TvT, TvR and anti-cheese build orders
+
 Get Strategy to select one using Spy
--detect enemy race
 -detect enemy cheese
 
-Refactor ReactiveFabricator code into buildUtils
 
 Fix gas allocation code (reactor/supply counts?)
 Debug allocate worker code - still stealing gas workers?
