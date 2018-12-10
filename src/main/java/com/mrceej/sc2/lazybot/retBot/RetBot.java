@@ -1,10 +1,11 @@
-package com.mrceej.sc2.lazybot.lazyBot;
+package com.mrceej.sc2.lazybot.retBot;
 
 import com.github.ocraft.s2client.bot.ClientError;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.bot.setting.PlayerSettings;
 import com.github.ocraft.s2client.protocol.game.Race;
 import com.mrceej.sc2.lazybot.Combat.General;
+import com.mrceej.sc2.lazybot.Combat.Overmind;
 import com.mrceej.sc2.lazybot.state.State;
 import com.mrceej.sc2.lazybot.strategy.CjBot;
 import com.mrceej.sc2.lazybot.strategy.ReactiveFabricator;
@@ -19,22 +20,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Log4j2
-public
-class LazyBot extends CjBot {
+public class RetBot extends CjBot {
+
     private final Strategy strategy = new Strategy(this);
     private final ReactiveFabricator fabricator = new ReactiveFabricator(this);
-    private final General general = new General(this);
+    private final Overmind overmind = new Overmind(this);
     private final MapUtils mapUtils = new MapUtils(this);
     private final Utils utils = new Utils(this);
     private final BuildUtils buildUtils = new BuildUtils(this);
     private final ZergUtils zergUtils = new ZergUtils(this);
-
     private int previousMinerals = 0;
     private List<State> unitStates;
 
 
-    public LazyBot(PlayerSettings opponent) {
-        super(opponent, Race.TERRAN);
+    public RetBot(PlayerSettings opponent) {
+        super(opponent, Race.ZERG);
     }
 
     private void init() {
@@ -44,8 +44,7 @@ class LazyBot extends CjBot {
         strategy.init(utils, buildUtils, zergUtils);
         buildUtils.init(utils, mapUtils);
         fabricator.init(strategy, utils, buildUtils);
-        general.init(unitStates, utils, mapUtils, buildUtils, fabricator);
-
+        overmind.init(unitStates, utils, mapUtils, buildUtils, zergUtils);
     }
 
     private void runAI() {
@@ -63,14 +62,14 @@ class LazyBot extends CjBot {
 
     @Override
     public void onGameStart() {
-        log.info("Hello world of Starcraft II bots! lazyBot here!");
+        log.info("Hello world of Starcraft II bots! RetBot here!");
         init();
     }
 
     @Override
     public void onStep() {
         int minerals = observation().getMinerals();
-        if (observation().getGameLoop() % 200 == 0 || (minerals % 25 == 0 && minerals != previousMinerals)) {
+        if (observation().getGameLoop() % 1000 == 0 || (minerals % 25 == 0 && minerals != previousMinerals)) {
             log.info("Game loop count :" + observation().getGameLoop());
             log.info("Minerals :" + observation().getMinerals() + " (" + utils.mineralRate + "/min)");
             log.info("Vespene :" + observation().getVespene() + " (" + utils.vespeneRate + "/min)");
@@ -83,17 +82,17 @@ class LazyBot extends CjBot {
     @Override
     public void onUnitCreated(UnitInPool unit) {
         unitStates.add(State.createState(unit));
-        general.onUnitCreated(unit);
+        overmind.onUnitCreated(unit);
     }
 
     @Override
-    public void onBuildingConstructionComplete(UnitInPool units) {
-        general.onBuildingConstructionComplete(units);
+    public void onBuildingConstructionComplete(UnitInPool unit) {
+        overmind.onBuildingConstructionComplete(unit);
     }
 
     @Override
     public void onUnitIdle(UnitInPool unitInPool) {
-        general.onUnitIdle(unitInPool);
+        overmind.onUnitIdle(unitInPool);
     }
 
     @Override

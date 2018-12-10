@@ -1,4 +1,4 @@
-package com.mrceej.sc2.lazybot.lazyBot;
+package com.mrceej.sc2.lazybot.Combat;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
@@ -8,15 +8,16 @@ import com.github.ocraft.s2client.protocol.observation.ui.ControlGroup;
 import com.github.ocraft.s2client.protocol.observation.ui.ObservationUi;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
 import com.github.ocraft.s2client.protocol.unit.Unit;
-import com.mrceej.sc2.lazybot.Combat.Squad;
-import com.mrceej.sc2.lazybot.utils.MapUtils;
+import com.mrceej.sc2.lazybot.strategy.ReactiveFabricator;
 import com.mrceej.sc2.lazybot.state.State;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
+import com.mrceej.sc2.lazybot.utils.MapUtils;
 import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
-import static com.github.ocraft.s2client.protocol.data.Units.*;
+import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_MARAUDER;
 
 @Slf4j
 public
@@ -24,6 +25,7 @@ class General {
     private final S2Agent agent;
     private Utils utils;
     private MapUtils mapUtils;
+    private BuildUtils buildUtils;
 
     private final ArrayList<Squad> squads;
     private final Map<UnitInPool, UnitInPool> workerToBaseMap;
@@ -34,22 +36,23 @@ class General {
     private ReactiveFabricator fab;
     private List<State> unitStates;
 
-    General(S2Agent agent) {
+    public General(S2Agent agent) {
         this.agent = agent;
         this.squads = new ArrayList<>();
         this.workerToBaseMap = new HashMap<>();
     }
 
-    void init(List<State> unitStates, Utils utils, MapUtils mapUtils, ReactiveFabricator fab) {
+    public void init(List<State> unitStates, Utils utils, MapUtils mapUtils, BuildUtils buildUtils, ReactiveFabricator fab) {
         this.unitStates = unitStates;
         this.utils = utils;
         this.mapUtils = mapUtils;
-        this.currentSquad = new Squad(agent, utils, mapUtils);
+        this.buildUtils = buildUtils;
+        this.currentSquad = new Squad(agent, utils, mapUtils, buildUtils);
         this.fab = fab;
         squads.add(currentSquad);
     }
 
-    void onUnitCreated(UnitInPool unitInPool) {
+    public void onUnitCreated(UnitInPool unitInPool) {
         if (!workerToBaseMap.containsKey(unitInPool)) {
             log.info("Created unit :" + unitInPool.getTag() + " :" + unitInPool.unit().getType());
         }
@@ -76,7 +79,7 @@ class General {
             case TERRAN_HELLION:
             case TERRAN_MEDIVAC:
                 addToControlGroup(1, unitType);
-                onSoldierCreated(unitInPool, TERRAN_MARINE);
+                onSoldierCreated(unitInPool, unitType);
                 break;
             case TERRAN_MARAUDER:
                 addToControlGroup(1, unitType);
@@ -87,7 +90,7 @@ class General {
         }
     }
 
-    void onBuildingConstructionComplete(UnitInPool unit) {
+    public void onBuildingConstructionComplete(UnitInPool unit) {
         Units unitType = (Units) unit.unit().getType();
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
@@ -138,7 +141,7 @@ class General {
 //            agent.actionsFeatureLayer().unitCommand(Abilities.Other.)
     }
 
-    void onUnitIdle(UnitInPool unitInPool) {
+    public void onUnitIdle(UnitInPool unitInPool) {
         log.info("Idle unit :" + unitInPool.getTag() + " :" + unitInPool.unit().getType());
         Unit unit = unitInPool.unit();
         Units unitType = (Units) unit.getType();
@@ -163,7 +166,7 @@ class General {
     }
 
     private void allocateWorkersToGas(UnitInPool refinery, int number) {
-        List<UnitInPool> bases = utils.getAllMyFinishedBases();
+        List<UnitInPool> bases = buildUtils.getAllMyFinishedBases();
         bases.sort(mapUtils.getLinearDistanceComparatorForUnit(refinery.unit().getPosition().toPoint2d()));
         int found = 0;
         for (UnitInPool base : bases) {
@@ -185,7 +188,7 @@ class General {
     }
 
     private void rebalanceWorkers() {
-        List<UnitInPool> bases = utils.getAllMyFinishedBases();
+        List<UnitInPool> bases = buildUtils.getAllMyFinishedBases();
         if (bases.size() < 2){
             return;
         }
@@ -272,7 +275,7 @@ class General {
         if (currentSquad.getOrders().equals(Squad.Orders.DEFEND)) {
             currentSquad.addUnitAndGiveOrders(unit);
         } else {
-            Squad squad = new Squad(agent, utils, mapUtils);
+            Squad squad = new Squad(agent, utils, mapUtils, buildUtils);
             squad.addUnitAndGiveOrders(unit);
             squads.add(squad);
             currentSquad = squad;
@@ -282,7 +285,7 @@ class General {
 
     private void onSCVCreated(UnitInPool unitInPool) {
         if (!workerToBaseMap.containsKey(unitInPool)) {
-            List<UnitInPool> commandCenters = utils.getAllMyFinishedBases();
+            List<UnitInPool> commandCenters = buildUtils.getAllMyFinishedBases();
             UnitInPool destination = commandCenters.stream()
                     .filter(c -> c.unit().getAssignedHarvesters().isPresent())
                     .min(Comparator.comparing(c -> c.unit().getAssignedHarvesters().get()))

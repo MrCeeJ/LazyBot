@@ -7,40 +7,43 @@ import com.github.ocraft.s2client.protocol.game.BattlenetMap;
 import com.github.ocraft.s2client.protocol.game.Difficulty;
 import com.github.ocraft.s2client.protocol.game.Race;
 import com.mrceej.sc2.lazybot.lazyBot.LazyBot;
+import com.mrceej.sc2.lazybot.retBot.RetBot;
 
 class BotClient {
 
+    private static final Race preferredRace = Race.ZERG;
+    private static final Difficulty preferredDifficulty = Difficulty.HARD;
+
     public static void main(String[] args) {
 
-        PlayerSettings  opponent = getComputerOpponent();
-        S2Agent bot = getPlayerBot();
-        Race race = getPlayerRace();
+        PlayerSettings opponent = getComputerOpponent();
+        S2Agent playerBot = getPlayerBot(opponent);
+        Race playerRace = getPlayerRace();
+
         S2Coordinator s2Coordinator = S2Coordinator.setup()
                 .loadSettings(args)
-                .setParticipants(S2Coordinator.createParticipant(race, bot),
-                        opponent)
+                .setParticipants(S2Coordinator.createParticipant(playerRace, playerBot),opponent)
                 .launchStarcraft()
                 .startGame(BattlenetMap.of("Cloud Kingdom LE"));
 
+        //noinspection StatementWithEmptyBody
         while (s2Coordinator.update()) {
         }
-
         s2Coordinator.quit();
     }
 
     private static Race getPlayerRace() {
-        return Race.TERRAN;
+        return Race.ZERG;
     }
 
-    private static S2Agent getPlayerBot() {
-
-        // Check for opponents here
-        return new LazyBot();
+    private static S2Agent getPlayerBot(PlayerSettings opponent) {
+        if(getPlayerRace().equals(Race.ZERG)) {
+            return new RetBot(opponent);
+        }
+        return new LazyBot(opponent);
     }
 
     private static PlayerSettings getComputerOpponent() {
-        //                        S2Coordinator.createComputer(Race.ZERG, Difficulty.MEDIUM_HARD))
-//                      S2Coordinator.createComputer(Race.TERRAN, Difficulty.MEDIUM_HARD))
-        return S2Coordinator.createComputer(Race.PROTOSS, Difficulty.HARDER);
+        return S2Coordinator.createComputer(preferredRace, preferredDifficulty);
     }
 }

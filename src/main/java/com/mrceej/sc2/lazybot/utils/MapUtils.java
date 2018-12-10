@@ -28,14 +28,16 @@ public class MapUtils {
     @Getter @Setter
     private UnitInPool startingBase;
     private Utils utils;
+    private BuildUtils buildUtils;
     // private List<Point> base_locations;
 
     public MapUtils(S2Agent agent) {
         this.agent = agent;
     }
 
-    public void init(Utils utils) {
+    public void init(Utils utils, BuildUtils buildUtils) {
         this.utils = utils;
+        this.buildUtils = buildUtils;
         //  base_locations = agent.query().calculateExpansionLocations(agent.observation());
         STARTING_BASE_LOCATION = agent.observation().getStartLocation();
     }
@@ -45,7 +47,7 @@ public class MapUtils {
     }
 
     public Point2d getCCLocation() {
-        List<UnitInPool> cc = utils.getAllMyFinishedBases();
+        List<UnitInPool> cc = buildUtils.getAllMyFinishedBases();
         if (cc.size() > 0)
             return cc.get(0).unit().getPosition().toPoint2d();
 
@@ -66,7 +68,7 @@ public class MapUtils {
 
     Optional<UnitInPool> findNearestVespene(UnitInPool source) {
 
-        List<UnitInPool> refineries = utils.getFinishedUnits(Units.TERRAN_REFINERY);
+        List<UnitInPool> refineries = buildUtils.getFinishedUnits(Units.TERRAN_REFINERY);
 
         return agent.observation().getUnits(Alliance.NEUTRAL, UnitInPool.isUnit(NEUTRAL_VESPENE_GEYSER)).stream()
                 .filter(unit -> positionNotIn(unit, refineries))
@@ -155,7 +157,7 @@ public class MapUtils {
 
 
     UnitInPool getRandomUnit(Units unitType) {
-        List<UnitInPool> units = utils.getFinishedUnits(unitType);
+        List<UnitInPool> units = buildUtils.getFinishedUnits(unitType);
         return units.get(ThreadLocalRandom.current().nextInt(units.size()));
     }
 

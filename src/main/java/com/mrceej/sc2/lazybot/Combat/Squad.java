@@ -3,6 +3,7 @@ package com.mrceej.sc2.lazybot.Combat;
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.bot.gateway.UnitInPool;
 import com.github.ocraft.s2client.protocol.data.Abilities;
+import com.mrceej.sc2.lazybot.utils.BuildUtils;
 import com.mrceej.sc2.lazybot.utils.MapUtils;
 import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.Getter;
@@ -16,6 +17,7 @@ public class Squad {
 
     private final Utils utils;
     private final MapUtils mapUtils;
+    private BuildUtils buildUtils;
     private final S2Agent agent;
     private int value ;
     @Getter
@@ -23,10 +25,11 @@ public class Squad {
     @Getter
     private final List<UnitInPool> units;
 
-    public Squad(S2Agent agent, Utils utils, MapUtils mapUtils) {
+    public Squad(S2Agent agent, Utils utils, MapUtils mapUtils, BuildUtils buildUtils) {
         this.agent = agent;
         this.utils = utils;
         this.mapUtils = mapUtils;
+        this.buildUtils = buildUtils;
         this.units = new ArrayList<>();
         this.value = 0;
         this.orders = Orders.DEFEND;
@@ -35,8 +38,8 @@ public class Squad {
     private void updateValue() {
         int val = 0;
         for (UnitInPool u : units) {
-            val += utils.getMineralCost(u);
-            val += (2 * utils.getGasCost(u));
+            val += buildUtils.getMineralCost(u);
+            val += (2 * buildUtils.getGasCost(u));
         }
         this.value = val;
         logValue();
@@ -87,7 +90,7 @@ public class Squad {
     }
 
     private void givePatrolBasesOrder(UnitInPool unit) {
-        utils.getAllMyFinishedBases()
+        buildUtils.getAllMyFinishedBases()
                 .forEach(base -> agent.actions().unitCommand(unit.unit(), Abilities.PATROL, base.unit(), true));
     }
 
