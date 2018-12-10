@@ -34,3 +34,10 @@ Work on unit state machine / control
 
 TODO:
 Figure out control group allocation - build from selected units?
+https://github.com/ocraft/ocraft-s2client/blob/master/ocraft-s2client-protocol/src/main/java/com/github/ocraft/s2client/protocol/action/ui/ActionUiControlGroup.java
+https://github.com/ocraft/ocraft-s2client/blob/master/ocraft-s2client-protocol/src/main/java/com/github/ocraft/s2client/protocol/action/ui/ActionUiSelectArmy.java
+https://github.com/ocraft/ocraft-s2client/blob/master/ocraft-s2client-protocol/src/main/java/com/github/ocraft/s2client/protocol/observation/ui/ControlGroup.java
+
+
+Blizzard docs:
+server messages : https://github.com/Blizzard/s2client-proto/blob/master/s2clientprotocol/sc2api.proto
