@@ -6,12 +6,15 @@ import com.github.ocraft.s2client.protocol.data.Abilities;
 import com.github.ocraft.s2client.protocol.data.Ability;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.spatial.Point2d;
+import com.github.ocraft.s2client.protocol.unit.Unit;
 import com.mrceej.sc2.lazybot.lazyBot.General;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.github.ocraft.s2client.protocol.data.Units.*;
 
@@ -37,45 +40,70 @@ class BuildUtils {
     }
 
 
-    public boolean buildUnit(Units unit) {
+    public void buildUnit(Units unit) {
 
         switch (unit) {
             case TERRAN_SCV:
             case TERRAN_MARINE:
-                return tryToBuildUnit(unit);
+            case TERRAN_HELLION:
+            case TERRAN_HELLION_TANK:
+            case TERRAN_MARAUDER:
+            case TERRAN_MEDIVAC:
+                buildUnitFromBuilding(unit);
+                 break;
+            case TERRAN_BARRACKS_TECHLAB:
+            case TERRAN_BARRACKS_REACTOR:
+            case TERRAN_FACTORY_TECHLAB:
             case TERRAN_FACTORY_REACTOR:
             case TERRAN_STARPORT_TECHLAB:
-                return tryToBuildAddon(unit);
+            case TERRAN_STARPORT_REACTOR:
+                 tryToBuildAddon(unit);
+                 break;
             case TERRAN_COMMAND_CENTER:
-                return tryToExpand();
+                tryToExpand();
+                break;
             case TERRAN_ORBITAL_COMMAND:
-                return tryToBuildOrbital();
+                tryToBuildOrbital();
+                break;
             case TERRAN_REFINERY:
-                return tryToBuildRefinery();
+                tryToBuildRefinery();
+                break;
             default:
-                return tryToBuildBuilding(unit);
+                tryToBuildBuilding(unit);
+                break;
+        }
+    }
+
+    private void buildUnitFromBuilding(Units unitType) {
+        Ability ability = utils.getAbilityToBuildUnit(unitType);
+        if (utils.canBuildAdditionalUnit(unitType)){
+            List<UnitInPool> builders = utils.getUnitsThatCanBuild(unitType);
+            if (builders.size() > 0) {
+                Unit builder = builders.get(0).unit();
+                agent.actions().unitCommand(builder, ability, false);
+                log.info("Started construction of " + unitType + " by " + builder.getType() + ", tag : " + builder.getTag());
+            }
         }
     }
 
     private boolean tryToBuildUnit(Units unitType) {
         Ability ability = utils.getAbilityToBuildUnit(unitType);
         if (agent.observation().getMinerals() >= utils.getMineralCost(unitType) && agent.observation().getVespene() >= utils.getGasCost(unitType)) {
-            List<UnitInPool> builders = utils.getUnitsThatCanBuild(unitType);
-            Optional<UnitInPool> builder = builders.stream()
+            List<UnitInPool> builders = utils.getUnitsThatCanBuild(unitType).stream()
                     .filter(u -> u.unit().getOrders().size() == 0)
-                    .findFirst();
-            if (builder.isPresent()) {
-                agent.actions().unitCommand(builder.get().unit(), ability, false);
-                log.info("Started construction of " + unitType + " by " + builder.get().unit().getType() + ", tag : " + builder.get().getTag());
+                    .collect(Collectors.toList());
+            for (UnitInPool builder : builders) {
+                agent.actions().unitCommand(builder.unit(), ability, false);
+                log.info("Started construction of " + unitType + " by " + builder.unit().getType() + ", tag : " + builder.getTag());
                 return true;
-            } else {
-                log.info("No units able to build a " + unitType + " from " + builders.size() + " builders.");
-                return false;
             }
+            log.info("No units able to build a " + unitType + " from " + builders.size() + " builders.");
+            return false;
         } else {
             log.info("Not enough resources to build a " + unitType);
             return false;
         }
+
     }
 
     private boolean tryToBuildOrbital() {
@@ -185,14 +213,24 @@ class BuildUtils {
         return false;
     }
 
-    public boolean canBuildBuilding(Units building) {
+    public List<UnitInPool> getBuildingsThatCanCurrentlyBuild(Units building) {
         return utils.getMineralCost(building) <= agent.observation().getMinerals() &&
                 utils.getGasCost(building) <= agent.observation().getVespene() &&
-                validateTechRequirements(building);
+                validateTechRequirements(building) ?
+                utils.getUnitsThatCanBuild(building) : new ArrayList<>();
+    }
+
+    public boolean canBuildBuilding(Units building) {
+        return getBuildingsThatCanCurrentlyBuild(building).size() > 0;
     }
 
     private boolean validateTechRequirements(Units building) {
         List<Units> reqs = techRequirements.get(building);
+        if (reqs == null) {
+            log.info("ALERT! no able to determine tech reqs for : "+building);
+            return false;
+        }
+
         for (Units unitType : reqs) {
             if (utils.getFinishedUnits(unitType).size() == 0) {
                 return false;

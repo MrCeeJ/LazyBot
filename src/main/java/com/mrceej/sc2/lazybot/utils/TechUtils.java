@@ -31,8 +31,13 @@ class TechUtils {
             entry(TERRAN_FACTORY_TECHLAB, List.of(TERRAN_FACTORY)),
             entry(TERRAN_FACTORY_REACTOR, List.of(TERRAN_FACTORY)),
             entry(TERRAN_STARPORT_TECHLAB, List.of(TERRAN_STARPORT)),
-            entry(TERRAN_STARPORT_REACTOR, List.of(TERRAN_STARPORT))
-    );
+            entry(TERRAN_STARPORT_REACTOR, List.of(TERRAN_STARPORT)),
+            entry(TERRAN_SCV, List.of(TERRAN_COMMAND_CENTER)),
+            entry(TERRAN_MARINE, List.of(TERRAN_BARRACKS)),
+            entry(TERRAN_MARAUDER, List.of(TERRAN_BARRACKS_TECHLAB)),
+            entry(TERRAN_HELLION, List.of(TERRAN_FACTORY)),
+            entry(TERRAN_MEDIVAC, List.of(TERRAN_STARPORT))
+            );
 
 
     static Map<Units, List<Units>> getTechRequirements() {

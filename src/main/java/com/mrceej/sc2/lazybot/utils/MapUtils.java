@@ -148,7 +148,7 @@ public class MapUtils {
 
     Optional<UnitInPool> getNearestFreeWorker(Point2d location) {
         return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_SCV)).stream()
-                .filter(unit -> unit.unit().getOrders().size() > 0)
+                .filter(unit -> unit.unit().getOrders().size() == 1)
                 .filter(unit -> unit.unit().getOrders().get(0).getAbility().equals(Abilities.HARVEST_GATHER))
                 .min(getLinearDistanceComparatorForUnit(location));
     }

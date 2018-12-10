@@ -16,7 +16,7 @@ import java.util.List;
 public
 class LazyBot extends S2Agent {
     private final Strategy strategy = new Strategy(this);
-    private final Fabrication fabrication = new Fabrication(this);
+    private final ReactiveFabricator fabricator = new ReactiveFabricator(this);
     private final General general = new General(this);
     private final MapUtils mapUtils = new MapUtils(this);
     private final Utils utils = new Utils(this);
@@ -29,14 +29,14 @@ class LazyBot extends S2Agent {
         mapUtils.init(utils);
         strategy.init(utils, buildUtils);
         buildUtils.init(utils, mapUtils, general);
-        fabrication.init(strategy, utils, buildUtils);
-        general.init(unitStates, utils, mapUtils, fabrication);
+        fabricator.init(strategy, utils, buildUtils);
+        general.init(unitStates, utils, mapUtils, fabricator);
     }
 
     private void runAI() {
         utils.updateIncomes();
         updateUnitStates();
-        fabrication.run();
+        fabricator.run();
     }
 
     private void updateUnitStates() {

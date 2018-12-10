@@ -1,7 +1,8 @@
-package com.mrceej.sc2.lazybot.strategy;
+package com.mrceej.sc2.lazybot.lazyBot;
 
 import com.github.ocraft.s2client.bot.S2Agent;
 import com.github.ocraft.s2client.protocol.data.Units;
+import com.mrceej.sc2.lazybot.strategy.Doctrine;
 import com.mrceej.sc2.lazybot.utils.BuildUtils;
 import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.log4j.Log4j2;
@@ -42,37 +43,45 @@ public class BasicBuildOrder extends Doctrine {
     );
 
     @Override
-    double calculateUrgency() {
+    protected double calculateUrgency() {
         return 1d;
     }
 
     @Override
     public Units getConstructionOrder(int minerals, int gas) {
 
+        Units constructionOrder = null;
+
         if (buildUtils.needSupply(SUPPLY_BUFFER)) {
-          //  log.info("BBO wants to build :" + TERRAN_SUPPLY_DEPOT);
+            //  log.info("BBO wants to build :" + TERRAN_SUPPLY_DEPOT);
             setConstructionDesire(TERRAN_SUPPLY_DEPOT);
-            return buildUtils.canBuildBuilding(TERRAN_SUPPLY_DEPOT) ? TERRAN_SUPPLY_DEPOT : INVALID;
-        }
-
-        for (Units u : unitPriority) {
-            if (canBuildAdditionalUnit(u, minerals, gas)) {
-            //    log.info("BBO wants to build :" + u);
-                setConstructionDesire(u);
-                return u;
+            constructionOrder = buildUtils.canBuildBuilding(TERRAN_SUPPLY_DEPOT) ? TERRAN_SUPPLY_DEPOT : INVALID;
+        } else {
+            for (Units u : unitPriority) {
+                if (utils.canBuildAdditionalUnit(u, minerals, gas)) {
+                    //    log.info("BBO wants to build :" + u);
+                    setConstructionDesire(u);
+                    constructionOrder = u;
+                    break;
+                }
+            }
+            if (buildOrderMap.size() >= currentOrderCount) {
+                Units building = buildOrderMap.get(currentOrderCount);
+                if (buildUtils.canBuildBuilding(building)) {
+                    if (constructionOrder == null) {
+                        currentOrderCount++;
+                        //     log.info("BBO wants to build :" + building);
+                        setConstructionDesire(building);
+                        constructionOrder = building;
+                    } else if (constructionOrder.equals(TERRAN_SCV)) {
+                        if (building.equals(TERRAN_ORBITAL_COMMAND) || building.equals(TERRAN_PLANETARY_FORTRESS)) {
+                            constructionOrder = building;
+                        }
+                    }
+                }
             }
         }
-
-        if (buildOrderMap.size() >= currentOrderCount) {
-            Units building = buildOrderMap.get(currentOrderCount);
-            if (buildUtils.canBuildBuilding(building)) {
-                currentOrderCount++;
-           //     log.info("BBO wants to build :" + building);
-                setConstructionDesire(building);
-                return building;
-            }
-        }
-        return INVALID;
+        return constructionOrder;
     }
 
     @Override

@@ -44,19 +44,6 @@ public class Macro extends Doctrine {
         }
     }
 
-    private double getExpenditure() {
-        return utils.countFinishedUnitType(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN + Utils.WORKER_COST_PER_MIN;
-    }
-
-    private double getPlannedExpenditure() {
-        double total = getExpenditure();
-        total += utils.countOfUnitsBuildingUnit(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN;
-        total += utils.countOfUnitsBuildingUnit(Units.TERRAN_COMMAND_CENTER) * Utils.WORKER_COST_PER_MIN;
-        total += utils.countOfUnitsBuildingUnit(TERRAN_PLANETARY_FORTRESS) * Utils.WORKER_COST_PER_MIN;
-        total += utils.countOfUnitsBuildingUnit(TERRAN_ORBITAL_COMMAND) * Utils.WORKER_COST_PER_MIN;
-
-        return total;
-    }
 
     @Override
     public String getName() {
@@ -69,5 +56,20 @@ public class Macro extends Doctrine {
         log.info("Barracks :" + utils.countFinishedUnitType(TERRAN_BARRACKS));
         log.info("Marines in construction : " + utils.countOfUnitsBuildingUnit(TERRAN_MARINE));
 
+    }
+
+
+    private double getExpenditure() {
+        return utils.countFinishedUnitType(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN + Utils.WORKER_COST_PER_MIN;
+    }
+
+    private double getPlannedExpenditure() {
+        double total = getExpenditure();
+        total += utils.countOfUnitsBuildingUnit(Units.TERRAN_BARRACKS) * Utils.MARINE_COST_PER_MIN;
+        total += utils.countOfUnitsBuildingUnit(Units.TERRAN_COMMAND_CENTER) * Utils.WORKER_COST_PER_MIN;
+        total += utils.countOfUnitsBuildingUnit(TERRAN_PLANETARY_FORTRESS) * Utils.WORKER_COST_PER_MIN;
+        total += utils.countOfUnitsBuildingUnit(TERRAN_ORBITAL_COMMAND) * Utils.WORKER_COST_PER_MIN;
+
+        return total;
     }
 }

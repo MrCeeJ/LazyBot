@@ -11,10 +11,9 @@ import java.util.Collections;
 import java.util.List;
 
 @Log4j2
-public
 class Strategy {
 
-    private enum Mode {basic, simple, rush, basicBuildOrder}
+    private enum Mode {basic, simple, rush, basicBuildOrder, dynamicBuildOrder}
 
     private final S2Agent agent;
     private final List<Doctrine> doctrines;
@@ -23,11 +22,14 @@ class Strategy {
     Strategy(S2Agent agent) {
         this.agent = agent;
         this.doctrines = new ArrayList<>();
-
-        mode = Mode.basicBuildOrder;
+        mode = Mode.dynamicBuildOrder;
     }
+
     void init(Utils utils, BuildUtils buildUtils) {
         switch (mode) {
+            case dynamicBuildOrder:
+                doctrines.add(new DynamicBuildOrder(agent, utils, buildUtils));
+                break;
             case basicBuildOrder:
                 doctrines.add(new BasicBuildOrder(agent, utils, buildUtils));
                 break;

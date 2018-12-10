@@ -27,6 +27,7 @@ public class SimpleSupply extends Doctrine {
         if (agent.observation().getFoodCap() < 200) {
             int supplyBuffer = 2;
             if (supplyBuffer + agent.observation().getFoodUsed() + utils.getMaxSupplyProduction() > agent.observation().getFoodCap() + utils.getSupplyInProgress()) {
+                setConstructionDesire(TERRAN_SUPPLY_DEPOT);
                 if (minerals < 100) {
                     return INVALID;
                 } else {

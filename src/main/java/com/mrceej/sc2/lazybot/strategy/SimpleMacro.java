@@ -6,8 +6,7 @@ import com.mrceej.sc2.lazybot.utils.BuildUtils;
 import com.mrceej.sc2.lazybot.utils.Utils;
 import lombok.extern.log4j.Log4j2;
 
-import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_BARRACKS;
-import static com.github.ocraft.s2client.protocol.data.Units.TERRAN_MARINE;
+import static com.github.ocraft.s2client.protocol.data.Units.*;
 
 @Log4j2
 public class SimpleMacro extends Doctrine {
@@ -27,6 +26,8 @@ public class SimpleMacro extends Doctrine {
     public Units getConstructionOrder(int minerals, int gas) {
 
         if (utils.countOfUnitsBuildingUnit(TERRAN_MARINE) < utils.countFinishedUnitType(TERRAN_BARRACKS)) {
+            setConstructionDesire(TERRAN_MARINE);
+
             lastDesiredUnit = Units.TERRAN_MARINE;
             if (minerals > 50) {
                 return lastDesiredUnit;
@@ -34,6 +35,7 @@ public class SimpleMacro extends Doctrine {
                 return Units.INVALID;
             }
         } else if (minerals > 150) {
+            setConstructionDesire(TERRAN_BARRACKS);
             lastDesiredUnit = Units.TERRAN_BARRACKS;
             return lastDesiredUnit;
         } else return Units.INVALID;

@@ -7,6 +7,7 @@ import com.github.ocraft.s2client.protocol.data.Ability;
 import com.github.ocraft.s2client.protocol.data.UnitType;
 import com.github.ocraft.s2client.protocol.data.Units;
 import com.github.ocraft.s2client.protocol.unit.Alliance;
+import com.github.ocraft.s2client.protocol.unit.Unit;
 import com.github.ocraft.s2client.protocol.unit.UnitOrder;
 import lombok.extern.log4j.Log4j2;
 
@@ -26,6 +27,9 @@ public class Utils {
 
     public static final double MARINE_COST_PER_MIN = 166.6666666666667;
     public static final double WORKER_COST_PER_MIN = 250;
+    public static final double HELLION_COST_PER_MIN = 285.7142857142857;
+    public static final double MEDIVAC_COST_PER_MIN = 200;
+
 
     private static final Map<Units, Abilities> UnitTypeToAbilityMap = Map.ofEntries(
             entry(TERRAN_COMMAND_CENTER, Abilities.BUILD_COMMAND_CENTER),
@@ -38,6 +42,7 @@ public class Utils {
             entry(TERRAN_SENSOR_TOWER, Abilities.BUILD_SENSOR_TOWER),
             entry(TERRAN_GHOST_ACADEMY, Abilities.BUILD_GHOST_ACADEMY),
             entry(TERRAN_FACTORY, Abilities.BUILD_FACTORY),
+            entry(TERRAN_HELLION, Abilities.TRAIN_HELLION),
             entry(TERRAN_STARPORT, Abilities.BUILD_STARPORT),
             entry(TERRAN_ARMORY, Abilities.BUILD_ARMORY),
             entry(TERRAN_FUSION_CORE, Abilities.BUILD_FUSION_CORE),
@@ -50,6 +55,8 @@ public class Utils {
             entry(TERRAN_PLANETARY_FORTRESS, Abilities.MORPH_PLANETARY_FORTRESS),
             entry(TERRAN_MEDIVAC, Abilities.TRAIN_MEDIVAC)
     );
+
+    private static final List<Abilities> buildAbilities = new ArrayList<>(UnitTypeToAbilityMap.values());
 
     public Utils(S2Agent agent) {
         this.agent = agent;
@@ -64,11 +71,33 @@ public class Utils {
         vespeneRate = agent.observation().getScore().getDetails().getCollectionRateVespene();
     }
 
+    public List<UnitInPool> getBuilderBuildings() {
+        return agent.observation().getUnits(Alliance.SELF,canBuildSomething() );
+    }
+
+    private Predicate<UnitInPool> canBuildSomething() {
+        return unitInPool -> unitInPool.unit().getType().getAbilities().stream().anyMatch(buildAbilities::contains);
+    }
+
+
     public List<UnitInPool> getUnitsThatCanBuild(Units unitType) {
         return getUnitsThatCouldBuild(unitType).stream()
-                .filter(u -> u.unit().getBuildProgress() == 1f)
+                .filter(isComplete())
+                .filter(isNotBuildingAnything())
                 .collect(Collectors.toList());
     }
+
+    private Predicate<UnitInPool> isComplete() {
+        return unitInPool -> unitInPool.unit().getBuildProgress() == 1f;
+    }
+
+    public Predicate<UnitInPool> isNotBuildingAnything() {
+        return unitInPool -> unitInPool.unit().getOrders().stream()
+                .map(UnitOrder::getAbility)
+                .map(ability -> (Abilities) ability)
+                .noneMatch(buildAbilities::contains);
+    }
+
 
     private List<UnitInPool> getUnitsThatCouldBuild(Units unitType) {
         Ability ability = UnitTypeToAbilityMap.get(unitType);
@@ -80,9 +109,8 @@ public class Utils {
     }
 
     public List<UnitInPool> getFinishedUnits(Units unitType) {
-
         return agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(unitType)).stream()
-                .filter(u -> u.unit().getBuildProgress() == 1f)
+                .filter(isComplete())
                 .collect(Collectors.toList());
     }
 
@@ -106,11 +134,15 @@ public class Utils {
                 .anyMatch(a -> a.equals(ability));
     }
 
-    public int countOfUnitsBeingBuilt(Units unitType) {
-        return getUnitsBeingBuilt(unitType).size();
+    public List<UnitInPool> getAllUnitsBeingBuilt() {
+        return agent.observation().getUnits(Alliance.SELF, Predicate.not(isComplete()));
     }
 
-    private List<UnitInPool> getUnitsBeingBuilt(Units unitType) {
+    public int countOfUnitsBeingBuilt(Units unitType) {
+        return getUnitsBeingBuiltOfType(unitType).size();
+    }
+
+    List<UnitInPool> getUnitsBeingBuiltOfType(Units unitType) {
         return agent.observation().getUnits(Alliance.SELF, isBeingBuilt(unitType));
     }
 
@@ -156,6 +188,16 @@ public class Utils {
         bases.addAll(getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
         return bases;
     }
+    public List<UnitInPool> getAllBasesIncludingUnderProduction() {
+        List<UnitInPool> bases = getFinishedUnits(TERRAN_COMMAND_CENTER);
+        bases.addAll(getUnitsBeingBuiltOfType(TERRAN_COMMAND_CENTER));
+        bases.addAll(getFinishedUnits(TERRAN_ORBITAL_COMMAND));
+        bases.addAll(getUnitsBeingBuiltOfType(TERRAN_ORBITAL_COMMAND));
+        bases.addAll(getFinishedUnits(TERRAN_PLANETARY_FORTRESS));
+        bases.addAll(getUnitsBeingBuiltOfType(TERRAN_PLANETARY_FORTRESS));
+        return bases;
+    }
+
 
     public boolean unitIsABase(UnitType unit) {
         return unitIsABase((Units) unit);
@@ -165,5 +207,48 @@ public class Utils {
         return unit.equals(TERRAN_COMMAND_CENTER) ||
                 unit.equals(TERRAN_PLANETARY_FORTRESS) ||
                 unit.equals(TERRAN_ORBITAL_COMMAND);
+    }
+
+    public String printUnitTypes(List<Units> unitList) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (Units unit : unitList) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(",");
+            }
+            sb.append(unit);
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public String printUnits(List<UnitInPool> unitList) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (UnitInPool unit : unitList) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(",");
+            }
+            sb.append(unit.unit().getType());
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+    public boolean canBuildAdditionalUnit(Units unit) {
+        return canBuildAdditionalUnit(unit, agent.observation().getMinerals(), agent.observation().getVespene());
+    }
+
+    public boolean canBuildAdditionalUnit(Units unit, int minerals, int gas) {
+        if (getMineralCost(unit) > minerals || getGasCost(unit) > gas) {
+            return false;
+        }
+        return getUnitsThatCanBuild(unit).stream()
+                .anyMatch(u -> u.unit().getOrders().size() == 0);
     }
 }

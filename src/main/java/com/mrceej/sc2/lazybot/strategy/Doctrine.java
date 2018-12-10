@@ -13,8 +13,8 @@ public abstract class Doctrine implements Comparable<Doctrine> {
 
 
     final S2Agent agent;
-    final Utils utils;
-    final BuildUtils buildUtils;
+    protected final Utils utils;
+    protected final BuildUtils buildUtils;
 
     double urgency = 100d;
 
@@ -22,18 +22,10 @@ public abstract class Doctrine implements Comparable<Doctrine> {
     @Getter
     UnitType constructionDesire = null;
 
-    Doctrine(S2Agent agent, Utils utils, BuildUtils buildUtils) {
+    public Doctrine(S2Agent agent, Utils utils, BuildUtils buildUtils) {
         this.agent = agent;
         this.utils = utils;
         this.buildUtils = buildUtils;
-    }
-
-    boolean canBuildAdditionalUnit(Units unit, int minerals, int gas) {
-        if (utils.getMineralCost(unit) > minerals || utils.getGasCost(unit) > gas) {
-            return false;
-        }
-        return utils.getUnitsThatCanBuild(unit).stream()
-                .anyMatch(u -> u.unit().getOrders().size() == 0);
     }
 
     public int compareTo(@NotNull Doctrine d) {
@@ -45,7 +37,9 @@ public abstract class Doctrine implements Comparable<Doctrine> {
         return urgency;
     }
 
-    abstract double calculateUrgency();
+    protected double calculateUrgency(){
+        return 0;
+    }
 
     public abstract Units getConstructionOrder(int minerals, int gas);
 

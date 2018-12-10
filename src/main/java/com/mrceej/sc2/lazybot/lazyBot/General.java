@@ -31,7 +31,7 @@ class General {
     private Squad currentSquad;
 
     private boolean firstCommandCenter = true;
-    private Fabrication fab;
+    private ReactiveFabricator fab;
     private List<State> unitStates;
 
     General(S2Agent agent) {
@@ -40,7 +40,7 @@ class General {
         this.workerToBaseMap = new HashMap<>();
     }
 
-    void init(List<State> unitStates, Utils utils, MapUtils mapUtils, Fabrication fab) {
+    void init(List<State> unitStates, Utils utils, MapUtils mapUtils, ReactiveFabricator fab) {
         this.unitStates = unitStates;
         this.utils = utils;
         this.mapUtils = mapUtils;
@@ -50,9 +50,11 @@ class General {
     }
 
     void onUnitCreated(UnitInPool unitInPool) {
-        log.info("Created unit :" + unitInPool.getTag() + " :" + unitInPool.unit().getType());
+        if (!workerToBaseMap.containsKey(unitInPool)) {
+            log.info("Created unit :" + unitInPool.getTag() + " :" + unitInPool.unit().getType());
+        }
         Units unitType = (Units) unitInPool.unit().getType();
-        fab.updateBuild(unitType);
+        fab.onUnitCreated(unitType);
         switch (unitType) {
             case TERRAN_COMMAND_CENTER:
             case TERRAN_PLANETARY_FORTRESS:
@@ -107,7 +109,8 @@ class General {
 //        Spatial.FeatureLayers.getDefaultInstance().
 //            Set<Ui.ControlGroup> groups = agent.observation().getRawObservation().getUi().get().getControlGroups();
 //        Ui.ActionControlGroup.ControlGroupAction group = Ui.ActionControlGroup.ControlGroupAction.forNumber(group);
-        log.info("Control groups :");
+
+//        log.info("Control groups :");
         Optional<ObservationUi> obs = agent.observation().getRawObservation().getUi();
         if (obs.isPresent()) {
             Set<ControlGroup> controlGroups = obs.get().getControlGroups();
@@ -195,9 +198,9 @@ class General {
                 basesOver.add(base);
             } else if (assignedWorkers < average) {
                 basesUnder.add(base);
-                log.info("Base : " + base.getTag().toString() + "Assigned too few workers :" + assignedWorkers + " - average :" + average);
+                log.info("Base : " + base.getTag().toString() + " Assigned too few workers :" + assignedWorkers + " - average :" + average);
             } else {
-                log.info("Base : " + base.getTag().toString() + "Assigned just enough workers :" + assignedWorkers + " - average :" + average);
+                log.info("Base : " + base.getTag().toString() + " Assigned just enough workers :" + assignedWorkers + " - average :" + average);
             }
 
             if (basesOver.size() > 0 && basesUnder.size() > 0) {
@@ -227,7 +230,7 @@ class General {
         Point2d location = to.unit().getPosition().toPoint2d();
         for (int i = 0; i < number; i++) {
             UnitInPool scv = workers.get(i);
-            log.info("Reassigning worker :" + scv.getTag().toString() + " from " + from.getTag().toString() + " to " + to.getTag().toString());
+            log.info("Reassigning worker :" + scv.getTag().toString() + " from " + from.getTag().toString() + " to " + to.getTag().toString() +" ("+to.unit().getType()+")");
             workerToBaseMap.put(scv, to);
             if (utils.unitIsABase(to.unit().getType())) {
                 rebaseSCVToCommandCenter(location, scv);
