@@ -73,6 +73,8 @@ class General {
                 addToControlGroup(6, unitType);
                 break;
             case TERRAN_MARINE:
+            case TERRAN_HELLION:
+            case TERRAN_MEDIVAC:
                 addToControlGroup(1, unitType);
                 onSoldierCreated(unitInPool, TERRAN_MARINE);
                 break;

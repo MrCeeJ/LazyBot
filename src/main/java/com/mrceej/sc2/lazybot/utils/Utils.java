@@ -154,7 +154,9 @@ public class Utils {
     public int getMaxSupplyProduction() {
         int total = 0;
         total += getAllMyFinishedBases().size();
-        total += (agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(Units.TERRAN_BARRACKS)).size() * 2);
+        total += (agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_BARRACKS)).size() * 2);
+        total += (agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_FACTORY)).size() * 2);
+        total += (agent.observation().getUnits(Alliance.SELF, UnitInPool.isUnit(TERRAN_STARPORT)).size() * 2);
         return total;
     }
 
