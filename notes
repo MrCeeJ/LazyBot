@@ -1,0 +1,31 @@
+Remove DynamicBuildOrder, BasicBuildOrder and Fabrication
+
+Convert run method to call Strategy.getDoctrine
+Add doctrine calls to the supply units and buildings methods
+
+Remove everything from Strategy
+Make a new Doctrine supporting
+  checkSupply();
+  checkMakeUnits();
+  checkMakeBuildings();
+  
+Make Strategy return a doctrine
+
+Implement TvP, TvZ, TvT, TvR and anti-cheese build orders
+Get Strategy to select one using Spy
+-detect enemy race
+-detect enemy cheese
+
+Refactor ReactiveFabricator code into buildUtils
+
+Fix gas allocation code (reactor/supply counts?)
+
+Squads:
+
+Work on unit state machine / control 
+- patrol (nearest and second nearest bases to OP?)
+- attack (attack enemy base / nearest visible enemy unit / cover map)
+- support (follow attack marines + heal?)
+- defend (take high ground position and seige)
+- attack target (anti rush)
+- 
