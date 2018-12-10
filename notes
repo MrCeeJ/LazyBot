@@ -19,6 +19,7 @@ Get Strategy to select one using Spy
 Refactor ReactiveFabricator code into buildUtils
 
 Fix gas allocation code (reactor/supply counts?)
+Debug allocate worker code - still stealing gas workers?
 
 Squads:
 
@@ -29,3 +30,7 @@ Work on unit state machine / control
 - defend (take high ground position and seige)
 - attack target (anti rush)
 - 
+
+
+TODO:
+Figure out control group allocation - build from selected units?
